@@ -4,9 +4,7 @@
   "private": true,
   "description": "Real-time Stock Order Book — BCA Final Project",
   "scripts": {
-    "dev:server": "pnpm --filter @orderbook/server dev",
-    "dev:client": "pnpm --filter @orderbook/client dev",
-    "dev": "pnpm run --parallel dev:server dev:client",
+    "dev": "pnpm --recursive --parallel --filter \"./packages/*\" dev",
     "build": "pnpm --filter @orderbook/server build && pnpm --filter @orderbook/client build",
     "test": "pnpm --filter @orderbook/server test"
   },

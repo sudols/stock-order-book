@@ -18,6 +18,7 @@ export default function App() {
 
 	// ── Auth listener ──────────────────────
 	useEffect(() => {
+		if (!auth) return;
 		const unsub = onAuthStateChanged(auth, (fbUser) => {
 			setUser(fbUser);
 		});
@@ -68,7 +69,7 @@ export default function App() {
 							{user.email}
 						</span>
 						<button
-							onClick={() => signOut(auth)}
+							onClick={() => auth && signOut(auth).then(() => setUser(null))}
 							className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border)] rounded-lg px-3 py-1.5 hover:bg-white/5 transition-colors"
 						>
 							Sign out

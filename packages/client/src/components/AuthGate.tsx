@@ -16,6 +16,8 @@ export function AuthGate() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if (!auth) return;
+
 		setLoading(true);
 		setError(null);
 
@@ -44,6 +46,12 @@ export function AuthGate() {
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
+					{/* Message if Auth is missing */}
+					{!auth && (
+						<div className="text-xs text-amber-500 bg-amber-500/10 p-3 rounded-lg mb-4">
+							⚠️ Firebase not configured. Please use <b>Mock Login</b> below.
+						</div>
+					)}
 					<div>
 						<label className="block text-xs text-[var(--text-muted)] mb-1 font-medium">
 							Email
@@ -51,10 +59,11 @@ export function AuthGate() {
 						<input
 							type="email"
 							required
+							disabled={!auth}
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							placeholder="you@example.com"
-							className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
+							className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors disabled:opacity-50"
 						/>
 					</div>
 					<div>
@@ -65,10 +74,11 @@ export function AuthGate() {
 							type="password"
 							required
 							minLength={6}
+							disabled={!auth}
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 							placeholder="••••••••"
-							className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
+							className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors disabled:opacity-50"
 						/>
 					</div>
 
@@ -80,7 +90,7 @@ export function AuthGate() {
 
 					<button
 						type="submit"
-						disabled={loading}
+						disabled={loading || !auth}
 						className="w-full py-3 rounded-lg text-sm font-semibold text-white bg-[var(--accent)] hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
 					>
 						{loading ? 'Loading…' : isSignUp ? 'Create Account' : 'Sign In'}
@@ -101,6 +111,35 @@ export function AuthGate() {
 							: "Don't have an account? Sign up"}
 					</button>
 				</div>
+			</div>
+
+			{/* ── Mock Login (Dev Only) ── */}
+			<div className="absolute bottom-8 left-0 right-0 text-center">
+				<button
+					type="button"
+					onClick={() => {
+						// Mock User object that satisfies the store's User type (partial)
+						const mockUser: any = {
+							uid: 'mock-user-123',
+							email: 'demo@localhost',
+							emailVerified: true,
+							isAnonymous: false,
+							metadata: {},
+							providerData: [],
+							refreshToken: '',
+							tenantId: null,
+							delete: async () => { },
+							getIdToken: async () => 'mock-user-123',
+							getIdTokenResult: async () => ({} as any),
+							reload: async () => { },
+							toJSON: () => ({}),
+						};
+						setUser(mockUser);
+					}}
+					className="text-xs font-mono text-[var(--accent)] hover:underline opacity-50 hover:opacity-100 transition-opacity"
+				>
+					[DEV] Mock Login
+				</button>
 			</div>
 		</div>
 	);
