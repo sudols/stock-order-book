@@ -114,31 +114,26 @@ export function AuthGate() {
 			</div>
 
 			{/* ── Mock Login (Dev Only) ── */}
+			{/* ── Mock Login (Dev Only) ── */}
 			<div className="absolute bottom-8 left-0 right-0 text-center">
 				<button
 					type="button"
 					onClick={() => {
-						// Mock User object that satisfies the store's User type (partial)
+						const randomId = Math.floor(Math.random() * 10000);
+						const uid = `mock-user-${randomId}`;
 						const mockUser: any = {
-							uid: 'mock-user-123',
-							email: 'demo@localhost',
+							uid,
+							email: `user${randomId}@demo.local`,
 							emailVerified: true,
 							isAnonymous: false,
-							metadata: {},
-							providerData: [],
-							refreshToken: '',
-							tenantId: null,
-							delete: async () => { },
-							getIdToken: async () => 'mock-user-123',
-							getIdTokenResult: async () => ({} as any),
-							reload: async () => { },
+							getIdToken: async () => uid,
 							toJSON: () => ({}),
 						};
 						setUser(mockUser);
 					}}
 					className="text-xs font-mono text-[var(--accent)] hover:underline opacity-50 hover:opacity-100 transition-opacity"
 				>
-					[DEV] Mock Login
+					[DEV] Mock Login (Random User)
 				</button>
 			</div>
 		</div>

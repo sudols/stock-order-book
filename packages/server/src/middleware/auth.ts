@@ -24,12 +24,21 @@ if (hasCredentials) {
  * Throws on invalid / expired tokens.
  */
 export async function verifyFirebaseToken(token: string): Promise<string> {
+  // Allow mock tokens (for Market Maker bot or Dev mode)
+  if (token.startsWith('mock-')) {
+    return token;
+  }
+
   if (!hasCredentials) {
-    // In mock mode, accept any token and return a deterministic UUID or just the token itself
-    // For simplicity in development, we'll assume the token IS the userId if it starts with "mock-"
-    if (token.startsWith('mock-')) return token;
+    // In mock mode, if not a 'mock-' token (already handled above), return a default mock user.
     return 'mock-user-123';
   }
-  const decoded = await getAuth().verifyIdToken(token);
-  return decoded.uid;
+
+  try {
+    const decodedToken = await getAuth().verifyIdToken(token);
+    return decodedToken.uid;
+  } catch (error) {
+    console.error('Error verifying Firebase token:', error);
+    throw new Error('Unauthorized');
+  }
 }
