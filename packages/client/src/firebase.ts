@@ -7,5 +7,15 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+let authStr: any = null;
+
+if (firebaseConfig.apiKey) {
+  try {
+    const app = initializeApp(firebaseConfig);
+    authStr = getAuth(app);
+  } catch (e) {
+    console.error('Firebase init failed:', e);
+  }
+}
+
+export const auth = authStr;
