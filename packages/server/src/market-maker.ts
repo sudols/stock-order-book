@@ -7,7 +7,7 @@ const SPREAD = 2; // $2 spread
 const BASE_PRICE = 100;
 const ORDER_SIZE_MIN = 1;
 const ORDER_SIZE_MAX = 5;
-const INTERVAL_MS = 2000; // New orders every 2s
+const INTERVAL_MS = 200; // New orders every 200ms
 
 // Utils
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
