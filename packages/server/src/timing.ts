@@ -12,7 +12,7 @@
  *
  * Only the sweep placeOrder calls are timed — setup is excluded.
  *
- * OUTPUT: Tab-separated (TSV) — copy and paste directly into Excel.
+ * OUTPUT: Tab-separated (TSV).
  *
  * Usage: pnpm --filter @orderbook/server timing
  */
@@ -24,21 +24,10 @@ import { PortfolioManager } from './portfolio-manager.js';
 import { MatchingEngine } from './matching-engine.js';
 import type { Order } from '@orderbook/shared';
 
-// ── Configuration ─────────────────────────────────────────────────────────────
-// Edit this array to add or remove trade counts.
-// Practical ceiling: 100,000 (~7s per run).
-// 1,000,000 is theoretically supported but takes ~35 min total (O(N²) splice
-// overhead in OrderBook.removeOrder shifts the entire price-level bucket on
-// every removal). Uncomment the last entry only if you have time to spare.
+// Config
 const TRADE_COUNTS = [10, 100, 1000, 5000, 10000, 100_000 /*, 1_000_000 */];
-
-// Number of timed runs per N. Average is reported.
 const RUNS_PER_N = 3;
-
-// Price for all orders. At $0.01 a single buyer ($10,000 default) can cover
-// up to 1,000,000 trades: 1,000,000 × $0.01 = $10,000.
 const PRICE = 0.01;
-
 // Engine hard limit per single order quantity.
 const CHUNK_SIZE = 10_000;
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,7 +35,6 @@ const CHUNK_SIZE = 10_000;
 /**
  * Build a fresh engine with N resting sell orders already on the book.
  * Returns the engine and the list of chunked sweep buy orders to place.
- * This setup is NOT timed.
  */
 function setupEngine(n: number): {
 	engine: MatchingEngine;
@@ -56,7 +44,7 @@ function setupEngine(n: number): {
 	const pm = new PortfolioManager();
 	const engine = new MatchingEngine(orderBook, pm);
 
-	// One unique seller per resting order — each starts with 100 stocks, sells qty 1.
+	// N sellers with 1 quantity each at $PRICE, ready to be swept.
 	for (let i = 0; i < n; i++) {
 		const sellerId = `seller-${i}`;
 		pm.initializeUser(sellerId);
@@ -72,9 +60,6 @@ function setupEngine(n: number): {
 			throw new Error(`Setup failed at sell order ${i}: ${result.error}`);
 		}
 	}
-
-	// Single buyer covers all chunks.
-	// Total cost: N × PRICE = 1,000,000 × $0.01 = $10,000 (within default balance).
 	const buyerId = 'bench-buyer';
 	pm.initializeUser(buyerId);
 
@@ -140,13 +125,11 @@ function main(): void {
 	);
 	console.log('');
 
-	// Warmup: run the smallest N once to prime V8's JIT without burning time on large N.
+	// JIT warming on smallest N before official timing runs, to reduce noise from compilation during the timed runs.
 	const warmupN = Math.min(...TRADE_COUNTS);
 	process.stdout.write(`Warming up (N=${warmupN})... `);
 	measureOnce(warmupN);
 	console.log('done\n');
-
-	// TSV header — paste this row into Excel as the column headers.
 	console.log(['N', 'Time (ms)', 'Orders/sec'].join('\t'));
 
 	for (const n of TRADE_COUNTS) {
@@ -160,8 +143,6 @@ function main(): void {
 	}
 
 	console.log('');
-	console.log('Copy the table above (including header) and paste into Excel.');
-	console.log('Cells will auto-split on tab stops.');
 }
 
 main();
