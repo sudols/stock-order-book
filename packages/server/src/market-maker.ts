@@ -28,10 +28,10 @@ async function placeOrder(side: 'buy' | 'sell', price: number, quantity: number)
 
     if (!response.ok) {
         const txt = await response.text();
-        console.error(`❌ Order failed: ${txt}`);
+        console.error(`Order failed: ${txt}`);
     } else {
         const json = await response.json();
-        console.log(`✅ ${side.toUpperCase()} ${quantity} @ $${price}`);
+        console.log(`${side.toUpperCase()} ${quantity} @ $${price}`);
     }
   } catch (err) {
     console.error('Network error:', err);
@@ -39,7 +39,7 @@ async function placeOrder(side: 'buy' | 'sell', price: number, quantity: number)
 }
 
 async function run() {
-  console.log(`🤖 Market Maker Bot starting...`);
+  console.log(`   Market Maker Bot starting...`);
   console.log(`   Target: ${API_URL}`);
   console.log(`   Spread: $${SPREAD}`);
   console.log(`   Interval: ${INTERVAL_MS}ms`);
