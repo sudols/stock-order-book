@@ -62,7 +62,7 @@ app.get('/health', (_req, res) => {
 
 // ── Start ────────────────────────────────────────────────
 server.listen(PORT, () => {
-  console.log(`🚀 Server listening on http://localhost:${PORT}`);
+  console.log(`Server listening on http://localhost:${PORT}`);
   console.log(`   tRPC  → http://localhost:${PORT}/trpc`);
   console.log(`   WS    → ws://localhost:${PORT}`);
 });
