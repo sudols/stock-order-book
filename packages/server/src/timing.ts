@@ -1,50 +1,62 @@
 /**
- * timing.ts — Orders-per-second timing script.
+ * timing.ts — Multi-Variant Performance Comparison
  *
- * Measures how long the matching engine takes to execute N trades
- * using a sweep: N resting sell orders are pre-loaded onto the book,
- * then buy orders sweep through all of them in chunks.
+ * Measures how different OrderBook implementations perform under the same workload.
+ * Tests 3 variants:
+ *   1. Naive: full sorted arrays, O(n log n) inserts
+ *   2. Baseline: current Map<price, Order[]> + sorted price levels
+ *   3. Optimized: linked queue per price level, O(1) removal
  *
- * Chunked sweep: the engine rejects any single order with qty > 10,000,
- * so for N > 10,000 the sweep is split into slices of CHUNK_SIZE.
- * A single buyer covers all chunks — at PRICE=$0.01 the total cost is
- * N × $0.01, staying within the $10,000 default for N ≤ 1,000,000.
+ * Workload: Sweep scenario — N resting sell orders, then buy orders sweep through.
  *
- * Only the sweep placeOrder calls are timed — setup is excluded.
- *
- * OUTPUT: Tab-separated (TSV).
+ * OUTPUT: Comparison table showing time and throughput per variant.
  *
  * Usage: pnpm --filter @orderbook/server timing
  */
 
 import { performance } from 'perf_hooks';
 import { v4 as uuidv4 } from 'uuid';
-import { OrderBook } from './orderbook.js';
+import type { Order } from '@orderbook/shared';
 import { PortfolioManager } from './portfolio-manager.js';
 import { MatchingEngine } from './matching-engine.js';
-import type { Order } from '@orderbook/shared';
 
 // Config
-const TRADE_COUNTS = [10, 100, 1000, 5000, 10000, 100_000 /*, 1_000_000 */];
-const RUNS_PER_N = 3;
+const TRADE_COUNTS = [10, 100, 500, 1000, 2500, 5000];
+const RUNS_PER_N = 2;
 const PRICE = 0.01;
-// Engine hard limit per single order quantity.
-const CHUNK_SIZE = 10_000;
+const CHUNK_SIZE = 10_000; // Engine hard limit per single order quantity
+
+// Variant definitions
+const VARIANTS = [
+	{ name: 'Naive', path: './orderbook-naive.js' },
+	{ name: 'Baseline', path: './orderbook.js' },
+	{ name: 'Optimized', path: './orderbook-optimized.js' },
+] as const;
+
 // ─────────────────────────────────────────────────────────────────────────────
+
+interface BenchResult {
+	n: number;
+	avgMs: number;
+	ordersPerSec: number;
+}
 
 /**
  * Build a fresh engine with N resting sell orders already on the book.
  * Returns the engine and the list of chunked sweep buy orders to place.
  */
-function setupEngine(n: number): {
+async function setupEngine(
+	OrderBookClass: any,
+	n: number,
+): Promise<{
 	engine: MatchingEngine;
 	sweepOrders: Order[];
-} {
-	const orderBook = new OrderBook();
+}> {
+	const orderBook = new OrderBookClass();
 	const pm = new PortfolioManager();
 	const engine = new MatchingEngine(orderBook, pm);
 
-	// N sellers with 1 quantity each at $PRICE, ready to be swept.
+	// N sellers with 1 quantity each at $PRICE
 	for (let i = 0; i < n; i++) {
 		const sellerId = `seller-${i}`;
 		pm.initializeUser(sellerId);
@@ -60,10 +72,11 @@ function setupEngine(n: number): {
 			throw new Error(`Setup failed at sell order ${i}: ${result.error}`);
 		}
 	}
+
 	const buyerId = 'bench-buyer';
 	pm.initializeUser(buyerId);
 
-	// Split the sweep into slices of CHUNK_SIZE (engine qty limit per order).
+	// Split the sweep into slices of CHUNK_SIZE
 	const sweepOrders: Order[] = [];
 	let remaining = n;
 	while (remaining > 0) {
@@ -86,8 +99,8 @@ function setupEngine(n: number): {
  * Time a single full sweep for N trades (all chunks combined).
  * Returns elapsed milliseconds.
  */
-function measureOnce(n: number): number {
-	const { engine, sweepOrders } = setupEngine(n);
+async function measureOnce(OrderBookClass: any, n: number): Promise<number> {
+	const { engine, sweepOrders } = await setupEngine(OrderBookClass, n);
 
 	let totalTrades = 0;
 	const start = performance.now();
@@ -110,39 +123,73 @@ function measureOnce(n: number): number {
 /**
  * Run measureOnce RUNS_PER_N times and return the average elapsed ms.
  */
-function measure(n: number): number {
+async function measure(OrderBookClass: any, n: number): Promise<number> {
 	let total = 0;
 	for (let r = 0; r < RUNS_PER_N; r++) {
-		total += measureOnce(n);
+		total += await measureOnce(OrderBookClass, n);
 	}
 	return total / RUNS_PER_N;
 }
 
-function main(): void {
-	console.log('Stock Order Book — Orders/sec Timing');
+/**
+ * Benchmark one variant across all N values.
+ */
+async function benchmarkVariant(
+	name: string,
+	OrderBookClass: any,
+): Promise<BenchResult[]> {
+	const results: BenchResult[] = [];
+
+	// Warmup run on smallest N
+	const warmupN = Math.min(...TRADE_COUNTS);
+	await measureOnce(OrderBookClass, warmupN);
+
+	for (const n of TRADE_COUNTS) {
+		const avgMs = await measure(OrderBookClass, n);
+		const ordersPerSec = Math.round(n / (avgMs / 1000));
+		results.push({ n, avgMs, ordersPerSec });
+	}
+
+	return results;
+}
+
+/**
+ * Format number with thousand separators
+ */
+function formatNumber(num: number): string {
+	return num.toLocaleString();
+}
+
+/**
+ * Main entry point — benchmark all variants and output comparison
+ */
+async function main(): Promise<void> {
+	console.log('Stock Order Book — Performance Comparison');
+	console.log('==========================================');
 	console.log(
 		`Sweep scenario | Price: $${PRICE} | Runs per N: ${RUNS_PER_N} | Chunk size: ${CHUNK_SIZE}`,
 	);
 	console.log('');
 
-	// JIT warming on smallest N before official timing runs, to reduce noise from compilation during the timed runs.
-	const warmupN = Math.min(...TRADE_COUNTS);
-	process.stdout.write(`Warming up (N=${warmupN})... `);
-	measureOnce(warmupN);
-	console.log('done\n');
-	console.log(['N', 'Time (ms)', 'Orders/sec'].join('\t'));
+	// Benchmark each variant
+	for (const variant of VARIANTS) {
+		console.log(`\n=== Benchmarking: ${variant.name} ===`);
+		const { OrderBook } = await import(variant.path);
 
-	for (const n of TRADE_COUNTS) {
-		// if (n >= 100_000) {
-		//   process.stderr.write(`  (N=${n.toLocaleString()} — this may take a while due to O(N²) splice overhead in OrderBook)\n`);
-		// }
-		const avgMs = measure(n);
-		const ordersPerSec = Math.round(n / (avgMs / 1000));
-		const timeFormatted = avgMs.toFixed(3);
-		console.log([n, timeFormatted, ordersPerSec].join('\t'));
+		console.log('N\tTime (ms)\tOrders/sec');
+
+		const results = await benchmarkVariant(variant.name, OrderBook);
+
+		// Print individual results
+		for (const result of results) {
+			console.log(
+				`${result.n}\t${result.avgMs.toFixed(3)}\t${formatNumber(result.ordersPerSec)}`,
+			);
+		}
 	}
-
-	console.log('');
 }
 
-main();
+main().catch((err) => {
+	console.error('Benchmark failed:', err);
+	process.exit(1);
+});
