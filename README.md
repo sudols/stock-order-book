@@ -6,7 +6,7 @@ A real-time stock order book application demonstrating high-performance order ma
 
 - **Dual Engine Support**: Choose between TypeScript or Go matching engine
 - **Real-time Updates**: WebSocket-based order book synchronization
-- **High Performance**: Go engine provides 20-50x faster order matching
+- **Dual Engine Evaluation**: Compare TypeScript and Go matching engines with shared benchmarks
 - **Price-Time Priority**: Standard exchange matching algorithm
 - **Portfolio Management**: Track user balances and prevent invalid trades
 - **Firebase Authentication**: Secure user authentication
@@ -122,13 +122,13 @@ tsx benchmark.ts
 | Implementation | Time (ms) | Orders/sec | Per-Order (µs) |
 |----------------|-----------|------------|----------------|
 | **TypeScript Naive** | ~42.8 | 233k | ~4.28 |
-| **TypeScript Baseline** | ~11.2 | 891k | ~1.12 |
-| **TypeScript Optimized** | ~4.6 | 2.1M | ~0.46 |
-| **Go Direct** | ~18.2 | 550k | ~1.82 |
-| **Go via HTTP** | ~678 | 14.7k | ~67.8 (includes HTTP overhead) |
+| **TypeScript Baseline** | ~9.7 | 1.0M | ~0.97 |
+| **TypeScript Optimized** | ~5.7 | 1.75M | ~0.57 |
+| **Go Direct** | ~22.7 | 441k | ~2.27 |
+| **Go via HTTP** | Varies by network/JSON overhead | Varies | Includes transport + serialization cost |
 
 **Key Insights:**
-- **Go Direct**: Competitive with TS Baseline, simpler code
+- **Go Direct**: Low-microsecond latency and isolated process model
 - **Go via HTTP**: Real-world integration, includes ~50-100µs network overhead
 - **TS Optimized**: Advanced data structures, best for specific workloads
 - **Go Benefits**: Better concurrency, lower memory, type safety
