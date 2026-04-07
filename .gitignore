@@ -5,3 +5,6 @@ dist/
 *.log
 .DS_Store
 .turbo
+
+# Go binaries
+packages/matching-engine-go/matching-engine
