@@ -1,17 +1,17 @@
 package internal
 
-import "sync"
-
 // OrderBook — Optimized Implementation (Linked Queue Per Price Level)
+//
+// Thread Safety:
+//   This OrderBook is NOT thread-safe on its own. Thread safety is provided
+//   by the semaphore in main.go which serializes all HTTP handler access.
+//   This design reduces lock overhead from 10+ lock/unlock cycles per request
+//   to just 1 acquire/release at the handler level.
 //
 // Design:
 //   - map[float64]*PriceLevel where PriceLevel = doubly-linked list of orders
 //   - Sorted price-level arrays (distinct prices only)
 //   - No array splice overhead on removals — O(1) unlink
-//
-// Purpose:
-//   Eliminates array shifting bottleneck from baseline implementation.
-//   Better scalability for high-volume removal scenarios.
 //
 // Complexity (p = distinct price levels, k = orders at one price):
 //   AddOrder    → O(log p)  binary search + O(1) append to tail
@@ -120,9 +120,6 @@ type OrderBook struct {
 
 	// Order count
 	size int
-
-	// Mutex for thread-safety
-	mu sync.RWMutex
 }
 
 // NewOrderBook creates a new empty order book
@@ -139,9 +136,6 @@ func NewOrderBook() *OrderBook {
 
 // AddOrder adds an order to the book
 func (ob *OrderBook) AddOrder(order *Order) {
-	ob.mu.Lock()
-	defer ob.mu.Unlock()
-
 	var priceMap map[float64]*PriceLevel
 	var priceLevels *[]float64
 	var ascending bool
@@ -173,9 +167,6 @@ func (ob *OrderBook) AddOrder(order *Order) {
 
 // RemoveOrder removes an order from the book by ID
 func (ob *OrderBook) RemoveOrder(orderID string) *Order {
-	ob.mu.Lock()
-	defer ob.mu.Unlock()
-
 	node, exists := ob.nodesById[orderID]
 	if !exists {
 		return nil
@@ -215,9 +206,6 @@ func (ob *OrderBook) RemoveOrder(orderID string) *Order {
 
 // GetBestBid returns the highest bid order (or nil if none)
 func (ob *OrderBook) GetBestBid() *Order {
-	ob.mu.RLock()
-	defer ob.mu.RUnlock()
-
 	if len(ob.bidPriceLevels) == 0 {
 		return nil
 	}
@@ -231,9 +219,6 @@ func (ob *OrderBook) GetBestBid() *Order {
 
 // GetBestAsk returns the lowest ask order (or nil if none)
 func (ob *OrderBook) GetBestAsk() *Order {
-	ob.mu.RLock()
-	defer ob.mu.RUnlock()
-
 	if len(ob.askPriceLevels) == 0 {
 		return nil
 	}
@@ -247,25 +232,16 @@ func (ob *OrderBook) GetBestAsk() *Order {
 
 // GetTop10Bids returns the top 10 bid orders
 func (ob *OrderBook) GetTop10Bids() []*Order {
-	ob.mu.RLock()
-	defer ob.mu.RUnlock()
-
 	return ob.getTopN(ob.bidPriceLevels, ob.bidsByPrice, 10)
 }
 
 // GetTop10Asks returns the top 10 ask orders
 func (ob *OrderBook) GetTop10Asks() []*Order {
-	ob.mu.RLock()
-	defer ob.mu.RUnlock()
-
 	return ob.getTopN(ob.askPriceLevels, ob.asksByPrice, 10)
 }
 
 // GetOrderByID retrieves an order by its ID
 func (ob *OrderBook) GetOrderByID(orderID string) *Order {
-	ob.mu.RLock()
-	defer ob.mu.RUnlock()
-
 	node := ob.nodesById[orderID]
 	if node == nil {
 		return nil
@@ -275,9 +251,6 @@ func (ob *OrderBook) GetOrderByID(orderID string) *Order {
 
 // Size returns the total number of orders in the book
 func (ob *OrderBook) Size() int {
-	ob.mu.RLock()
-	defer ob.mu.RUnlock()
-
 	return ob.size
 }
 

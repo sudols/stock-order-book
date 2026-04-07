@@ -12,6 +12,21 @@ import (
 // Global matching engine instance
 var engine *internal.MatchingEngine
 
+// Semaphore for serializing all requests (buffer size 1 = only one request at a time)
+// This replaces fine-grained mutex locks in OrderBook with a single coarse-grained lock
+// at the HTTP handler level, reducing lock/unlock overhead from 10+ to 1 per request.
+var sem = make(chan struct{}, 1)
+
+// acquireSem blocks until the semaphore is available
+func acquireSem() {
+	sem <- struct{}{}
+}
+
+// releaseSem releases the semaphore
+func releaseSem() {
+	<-sem
+}
+
 func main() {
 	// Initialize matching engine
 	engine = internal.NewMatchingEngine()
@@ -42,17 +57,19 @@ func handlePlaceOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse JSON body
+	// Parse JSON body (outside semaphore - no shared state access)
 	var order internal.Order
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
 		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Call matching engine
+	// Acquire semaphore for engine access
+	acquireSem()
 	trades, remaining, err := engine.PlaceOrder(&order)
+	releaseSem()
 
-	// Build response
+	// Build response (outside semaphore)
 	response := internal.PlaceOrderResponse{
 		Trades:         trades,
 		RemainingOrder: remaining,
@@ -81,7 +98,10 @@ func handleCancelOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Acquire semaphore for engine access
+	acquireSem()
 	order, err := engine.CancelOrder(req.OrderID, req.UserID)
+	releaseSem()
 
 	response := internal.CancelOrderResponse{
 		Order: order,
@@ -101,7 +121,10 @@ func handleGetOrderBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Acquire semaphore for engine access
+	acquireSem()
 	snapshot := engine.GetOrderBook()
+	releaseSem()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(snapshot)
@@ -114,9 +137,14 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Acquire semaphore for engine access
+	acquireSem()
+	size := engine.Size()
+	releaseSem()
+
 	response := map[string]interface{}{
 		"status":    "ok",
-		"orders":    engine.Size(),
+		"orders":    size,
 		"timestamp": time.Now().UnixMilli(),
 	}
 
