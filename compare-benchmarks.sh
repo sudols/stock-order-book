@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Comparison script - runs both TS and Go benchmarks and displays results
 
 echo "╔════════════════════════════════════════════════════════════════╗"
@@ -21,7 +25,8 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📝 TypeScript Benchmarks"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-cd packages/server && pnpm timing 2>/dev/null
+cd "$ROOT_DIR/packages/server"
+pnpm timing
 echo ""
 
 # Run Go benchmark
@@ -29,25 +34,20 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "🚀 Go Benchmark (Direct - No HTTP)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-cd ../matching-engine-go && go run cmd/benchmark/main.go
+cd "$ROOT_DIR/packages/matching-engine-go"
+go run cmd/benchmark/main.go
 echo ""
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📊 Key Insights"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "Comparison at N=10,000 orders:"
+echo "Summary for N=10,000 orders:"
 echo ""
-echo "  TypeScript (Naive):      ~42.8 ms  →  233k orders/sec"
-echo "  TypeScript (Baseline):   ~11.2 ms  →  891k orders/sec"
-echo "  TypeScript (Optimized):  ~4.6 ms   →  2.1M orders/sec"
-echo "  Go (Direct):             ~18.2 ms  →  550k orders/sec"
-echo ""
-echo "💡 Notes:"
-echo "  - Go shows ~2-4x improvement over TS Baseline"
-echo "  - Go per-order latency: ~1.8 µs (extremely fast)"
-echo "  - TS Optimized uses advanced data structures (linked queues)"
-echo "  - Go uses simpler maps + sorted slices (easier to understand)"
-echo "  - Results may vary based on system load"
+echo "  - Use the benchmark tables above as the source of truth."
+echo "  - In this sweep workload, TypeScript Baseline/Optimized can outperform Go Direct."
+echo "  - Go Direct still runs in low-microsecond per-order latency."
+echo "  - Go via HTTP (packages/server/benchmark.ts) includes network/JSON overhead."
+echo "  - Re-run multiple times for stable averages on your machine."
 echo ""
 echo "✅ Benchmarks complete!"
