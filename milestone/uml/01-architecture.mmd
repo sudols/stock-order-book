@@ -1,0 +1,67 @@
+---
+title: System Architecture — Stock Order Book
+---
+graph TB
+    subgraph CLIENT["Client Package (React + Vite)"]
+        direction TB
+        FB_CLIENT["Firebase Auth<br/>(firebase.ts)"]
+        STORE["Zustand Store<br/>(store.ts)<br/>─────────────<br/>user | bids | asks<br/>portfolio | socket | error"]
+        TRPC_CLIENT["tRPC Client<br/>(trpc.ts)"]
+        SOCKET_CLIENT["Socket.io-client"]
+
+        subgraph COMPONENTS["Smart Components"]
+            AUTH_GATE["AuthGate"]
+            ORDER_BOOK_VIEW["OrderBookView<br/>(bids / asks table)"]
+            TRADE_FORM["TradeForm<br/>(buy / sell form)"]
+            PORTFOLIO_VIEW["PortfolioView<br/>(USD + stocks)"]
+            TRADE_HISTORY["TradeHistory"]
+        end
+
+        COMPONENTS -- reads/writes --> STORE
+        TRPC_CLIENT -- updates --> STORE
+        SOCKET_CLIENT -- orderbook events --> STORE
+        FB_CLIENT -- user session --> STORE
+    end
+
+    subgraph SERVER["Server Package (Node.js + Express)"]
+        direction TB
+        EXPRESS["Express HTTP Server<br/>:3001"]
+        TRPC_SERVER["tRPC Router<br/>(routers/app.ts)<br/>─────────────<br/>placeOrder<br/>cancelOrder<br/>getPortfolio<br/>getOrderBook"]
+        AUTH_MW["Auth Middleware<br/>(middleware/auth.ts)<br/>Firebase token verify"]
+        SOCKET_SERVER["Socket.io Server<br/>emit: orderbook snapshot"]
+
+        subgraph ENGINE["Core Engine"]
+            ME["MatchingEngine<br/>(matching-engine.ts)<br/>─────────────<br/>placeOrder()<br/>cancelOrder()"]
+            OB["OrderBook<br/>(orderbook.ts)<br/>─────────────<br/>bidsByPrice: Map<price, Order[]><br/>asksByPrice: Map<price, Order[]><br/>bidPriceLevels: number[]<br/>askPriceLevels: number[]<br/>ordersById: Map<id, Order>"]
+            PM["PortfolioManager<br/>(portfolio-manager.ts)<br/>─────────────<br/>portfolios: Map<userId, Portfolio><br/>initializeUser()<br/>canAfford()<br/>executeTrade()"]
+        end
+
+        EXPRESS --> TRPC_SERVER
+        TRPC_SERVER --> AUTH_MW
+        AUTH_MW --> ME
+        ME --> OB
+        ME --> PM
+        TRPC_SERVER --> SOCKET_SERVER
+    end
+
+    subgraph SHARED["Shared Package (@orderbook/shared)"]
+        TYPES["TypeScript Interfaces<br/>─────────────<br/>Order | Trade | Portfolio<br/>OrderBookSnapshot | Result"]
+    end
+
+    subgraph FIREBASE["Firebase (Google Cloud)"]
+        FB_AUTH["Firebase Authentication<br/>(token issuer)"]
+    end
+
+    TRPC_CLIENT -- "HTTP POST /trpc<br/>(placeOrder, cancelOrder,<br/>getPortfolio, getOrderBook)" --> EXPRESS
+    SOCKET_CLIENT -- "WebSocket ws://localhost:3001" --> SOCKET_SERVER
+    FB_CLIENT -- "sign in / get ID token" --> FB_AUTH
+    AUTH_MW -- "verifyIdToken(token)" --> FB_AUTH
+    CLIENT -. "import types" .-> SHARED
+    SERVER -. "import types" .-> SHARED
+
+    style CLIENT fill:#1e3a5f,color:#ffffff,stroke:#4a90d9
+    style SERVER fill:#1a3a2a,color:#ffffff,stroke:#4caf50
+    style SHARED fill:#3a2a1a,color:#ffffff,stroke:#ff9800
+    style FIREBASE fill:#3a1a1a,color:#ffffff,stroke:#f44336
+    style ENGINE fill:#0d2a1a,color:#ffffff,stroke:#66bb6a
+    style COMPONENTS fill:#0d2040,color:#ffffff,stroke:#42a5f5
