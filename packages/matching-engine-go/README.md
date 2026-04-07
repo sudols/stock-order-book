@@ -40,9 +40,9 @@ go run cmd/benchmark/main.go
 This runs the same "sweep scenario" as the TypeScript benchmarks for apples-to-apples comparison.
 
 **Sample Results (N=10,000 orders):**
-- **Time**: ~18ms
-- **Throughput**: ~550k orders/sec
-- **Per-order latency**: ~1.8 µs
+- **Time**: ~7.5ms
+- **Throughput**: ~1.3M orders/sec
+- **Per-order latency**: ~0.75 µs
 
 ### Compare with TypeScript
 
@@ -55,8 +55,15 @@ This runs both TypeScript and Go benchmarks side-by-side.
 
 ## Performance
 
-Measured improvements over TypeScript:
-- **2-4x faster** than TypeScript Baseline
-- **Per-order latency**: ~1.8 µs (vs ~5-10 µs in TS)
-- **Lower memory usage**: ~50% less
-- **Better concurrency**: Native goroutine support
+The Go implementation uses the same optimized data structures as TypeScript Optimized:
+- Doubly-linked lists per price level for O(1) order removals
+- Sorted price-level arrays for fast best bid/ask lookup
+- Hash map for O(1) order lookup by ID
+
+Measured performance:
+- **~1.5x faster** than TypeScript Baseline
+- **Competitive** with TypeScript Optimized (~1.6x slower due to mutex overhead)
+- **Per-order latency**: ~0.75 µs
+- **Throughput**: ~1.3M orders/sec
+- **Lower memory usage**: ~50% less than Node.js
+- **Better concurrency**: Native goroutine support with thread-safe operations
