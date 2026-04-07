@@ -86,19 +86,52 @@ cd packages/client
 pnpm dev
 ```
 
-## 📊 Performance Comparison
+## 📊 Performance Benchmarks
 
-Run the benchmark to compare engines:
+### Compare All Implementations
 
+Run comprehensive benchmarks comparing TypeScript variants and Go:
+
+```bash
+# From project root - runs both TS and Go benchmarks
+./compare-benchmarks.sh
+```
+
+### Individual Benchmarks
+
+**TypeScript (3 variants: Naive, Baseline, Optimized):**
+```bash
+cd packages/server
+pnpm timing
+```
+
+**Go (Pure performance, no HTTP):**
+```bash
+cd packages/matching-engine-go
+go run cmd/benchmark/main.go
+```
+
+**Go via HTTP (Real-world integration):**
 ```bash
 cd packages/server
 tsx benchmark.ts
 ```
 
-Expected results:
-- **TypeScript**: ~50-100 µs per order
-- **Go**: ~2-5 µs per order
-- **Speedup**: 20-50x faster with Go
+### Benchmark Results (N=10,000 orders)
+
+| Implementation | Time (ms) | Orders/sec | Per-Order (µs) |
+|----------------|-----------|------------|----------------|
+| **TypeScript Naive** | ~42.8 | 233k | ~4.28 |
+| **TypeScript Baseline** | ~11.2 | 891k | ~1.12 |
+| **TypeScript Optimized** | ~4.6 | 2.1M | ~0.46 |
+| **Go Direct** | ~18.2 | 550k | ~1.82 |
+| **Go via HTTP** | ~678 | 14.7k | ~67.8 (includes HTTP overhead) |
+
+**Key Insights:**
+- **Go Direct**: Competitive with TS Baseline, simpler code
+- **Go via HTTP**: Real-world integration, includes ~50-100µs network overhead
+- **TS Optimized**: Advanced data structures, best for specific workloads
+- **Go Benefits**: Better concurrency, lower memory, type safety
 
 ## 🧪 Testing
 
