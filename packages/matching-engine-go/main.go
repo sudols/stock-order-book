@@ -116,7 +116,7 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"status":    "ok",
-		"orders":    engine.GetOrderBook().Bids,
+		"orders":    engine.Size(),
 		"timestamp": time.Now().UnixMilli(),
 	}
 

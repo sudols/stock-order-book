@@ -145,6 +145,11 @@ func (me *MatchingEngine) GetOrderBook() *OrderBookSnapshot {
 	}
 }
 
+// Size returns total active orders in the book.
+func (me *MatchingEngine) Size() int {
+	return me.orderBook.Size()
+}
+
 // Helper function for min
 func min(a, b float64) float64 {
 	if a < b {
