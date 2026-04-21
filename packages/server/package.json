@@ -13,6 +13,7 @@
     "timing": "tsx src/timing.ts"
   },
   "dependencies": {
+    "@datastructures-js/linked-list": "^6.1.4",
     "@orderbook/shared": "workspace:*",
     "@trpc/server": "^10.45.2",
     "cors": "^2.8.5",
