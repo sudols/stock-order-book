@@ -34,23 +34,17 @@ import type { Order } from '@orderbook/shared';
  * latter needs to be O(1) and it now is, without touching the full order arrays.
  */
 export class OrderBook {
-  // ── price-level maps (source of truth) ───────────────
   private bidsByPrice = new Map<number, Order[]>();
   private asksByPrice = new Map<number, Order[]>();
 
-  // ── sorted price-level arrays (distinct prices only) ─
+  // sorted price-level arrays (distinct prices only) ─
   // bids: descending (highest bid first)
   // asks: ascending  (lowest ask first)
   private bidPriceLevels: number[] = [];
   private askPriceLevels: number[] = [];
-
-  // ── ID map ────────────────────────────────────────────
   private ordersById = new Map<string, Order>();
-
-  // ── order count ───────────────────────────────────────
   private _size = 0;
 
-  // ─── Add ─────────────────────────────────────────────
   addOrder(order: Order): void {
     this.ordersById.set(order.id, order);
 
@@ -58,10 +52,8 @@ export class OrderBook {
     const existing = priceMap.get(order.price);
 
     if (existing) {
-      // Price level already exists — append (preserves FIFO within level).
       existing.push(order);
     } else {
-      // New price level — create bucket and record the price in sorted array.
       priceMap.set(order.price, [order]);
       if (order.side === 'buy') {
         this.insertSorted(this.bidPriceLevels, order.price, 'desc');
@@ -73,7 +65,6 @@ export class OrderBook {
     this._size++;
   }
 
-  // ─── Remove ──────────────────────────────────────────
   removeOrder(orderId: string): Order | null {
     const order = this.ordersById.get(orderId);
     if (!order) return null;
@@ -88,7 +79,6 @@ export class OrderBook {
     if (idx !== -1) bucket.splice(idx, 1);
 
     if (bucket.length === 0) {
-      // Price level is now empty — evict from map and price levels array.
       priceMap.delete(order.price);
       if (order.side === 'buy') {
         this.removeSorted(this.bidPriceLevels, order.price, 'desc');
@@ -101,7 +91,6 @@ export class OrderBook {
     return order;
   }
 
-  // ─── Queries ─────────────────────────────────────────
   getOrdersAtPrice(side: 'buy' | 'sell', price: number): Order[] {
     const priceMap = side === 'buy' ? this.bidsByPrice : this.asksByPrice;
     return priceMap.get(price) ?? [];
@@ -135,7 +124,6 @@ export class OrderBook {
     return this._size;
   }
 
-  // ─── Private helpers ─────────────────────────────────
 
   /**
    * Collect up to `n` orders by iterating price levels in priority order.

@@ -21,19 +21,17 @@ import { PortfolioManager } from './portfolio-manager.js';
 import { MatchingEngine } from './matching-engine.js';
 
 // Config
-const TRADE_COUNTS = [10, 100, 500, 1000, 2500, 5000];
+const TRADE_COUNTS = [10, 100, 500, 1000, 2500, 5000, 10000];
 const RUNS_PER_N = 2;
 const PRICE = 0.01;
 const CHUNK_SIZE = 10_000; // Engine hard limit per single order quantity
 
-// Variant definitions
 const VARIANTS = [
 	{ name: 'Naive', path: './orderbook-naive.js' },
 	{ name: 'Baseline', path: './orderbook.js' },
 	{ name: 'Optimized', path: './orderbook-optimized.js' },
 ] as const;
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface BenchResult {
 	n: number;
@@ -41,10 +39,6 @@ interface BenchResult {
 	ordersPerSec: number;
 }
 
-/**
- * Build a fresh engine with N resting sell orders already on the book.
- * Returns the engine and the list of chunked sweep buy orders to place.
- */
 async function setupEngine(
 	OrderBookClass: any,
 	n: number,
@@ -76,7 +70,6 @@ async function setupEngine(
 	const buyerId = 'bench-buyer';
 	pm.initializeUser(buyerId);
 
-	// Split the sweep into slices of CHUNK_SIZE
 	const sweepOrders: Order[] = [];
 	let remaining = n;
 	while (remaining > 0) {
@@ -95,10 +88,6 @@ async function setupEngine(
 	return { engine, sweepOrders };
 }
 
-/**
- * Time a single full sweep for N trades (all chunks combined).
- * Returns elapsed milliseconds.
- */
 async function measureOnce(OrderBookClass: any, n: number): Promise<number> {
 	const { engine, sweepOrders } = await setupEngine(OrderBookClass, n);
 
@@ -120,9 +109,6 @@ async function measureOnce(OrderBookClass: any, n: number): Promise<number> {
 	return end - start;
 }
 
-/**
- * Run measureOnce RUNS_PER_N times and return the average elapsed ms.
- */
 async function measure(OrderBookClass: any, n: number): Promise<number> {
 	let total = 0;
 	for (let r = 0; r < RUNS_PER_N; r++) {
@@ -153,9 +139,6 @@ async function benchmarkVariant(
 	return results;
 }
 
-/**
- * Format number with thousand separators
- */
 function formatNumber(num: number): string {
 	return num.toLocaleString();
 }
@@ -171,7 +154,6 @@ async function main(): Promise<void> {
 	);
 	console.log('');
 
-	// Benchmark each variant
 	for (const variant of VARIANTS) {
 		console.log(`\n=== Benchmarking: ${variant.name} ===`);
 		const { OrderBook } = await import(variant.path);
@@ -180,7 +162,6 @@ async function main(): Promise<void> {
 
 		const results = await benchmarkVariant(variant.name, OrderBook);
 
-		// Print individual results
 		for (const result of results) {
 			console.log(
 				`${result.n}\t${result.avgMs.toFixed(3)}\t${formatNumber(result.ordersPerSec)}`,
