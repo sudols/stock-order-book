@@ -1,10 +1,21 @@
 import { useState } from 'react';
 import {
-	signInWithEmailAndPassword,
 	createUserWithEmailAndPassword,
+	signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useStore } from '../store';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function AuthGate() {
 	const setUser = useStore((s) => s.setUser);
@@ -34,90 +45,82 @@ export function AuthGate() {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center p-4">
-			<div className="glass-card glow-border p-8 w-full max-w-sm">
-				{/* Logo / Title */}
-				<div className="text-center mb-8">
-					<div className="text-3xl mb-2">📈</div>
-					<h1 className="text-xl font-bold">Stock Order Book</h1>
-					<p className="text-sm text-[var(--text-muted)] mt-1">
+		<div className="relative flex min-h-screen items-center justify-center p-4">
+			<Card className="w-full max-w-sm">
+				<CardHeader className="space-y-2 text-center">
+					<CardTitle className="text-xl">Stock Order Book</CardTitle>
+					<CardDescription>
 						{isSignUp ? 'Create an account' : 'Sign in to trade'}
-					</p>
-				</div>
-
-				<form onSubmit={handleSubmit} className="space-y-4">
-					{/* Message if Auth is missing */}
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
 					{!auth && (
-						<div className="text-xs text-amber-500 bg-amber-500/10 p-3 rounded-lg mb-4">
-							⚠️ Firebase not configured. Please use <b>Mock Login</b> below.
-						</div>
-					)}
-					<div>
-						<label className="block text-xs text-[var(--text-muted)] mb-1 font-medium">
-							Email
-						</label>
-						<input
-							type="email"
-							required
-							disabled={!auth}
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							placeholder="you@example.com"
-							className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors disabled:opacity-50"
-						/>
-					</div>
-					<div>
-						<label className="block text-xs text-[var(--text-muted)] mb-1 font-medium">
-							Password
-						</label>
-						<input
-							type="password"
-							required
-							minLength={6}
-							disabled={!auth}
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							placeholder="••••••••"
-							className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors disabled:opacity-50"
-						/>
-					</div>
-
-					{error && (
-						<div className="text-sm text-ask bg-ask/10 rounded-lg px-3 py-2">
-							{error}
-						</div>
+						<Alert>
+							<AlertDescription>
+								Firebase not configured. Use mock login below.
+							</AlertDescription>
+						</Alert>
 					)}
 
-					<button
-						type="submit"
-						disabled={loading || !auth}
-						className="w-full py-3 rounded-lg text-sm font-semibold text-white bg-[var(--accent)] hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
-					>
-						{loading ? 'Loading…' : isSignUp ? 'Create Account' : 'Sign In'}
-					</button>
-				</form>
+					<form onSubmit={handleSubmit} className="space-y-4">
+						<div className="space-y-1.5">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								required
+								disabled={!auth}
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								placeholder="you@example.com"
+							/>
+						</div>
 
-				<div className="mt-4 text-center">
-					<button
+						<div className="space-y-1.5">
+							<Label htmlFor="password">Password</Label>
+							<Input
+								id="password"
+								type="password"
+								required
+								minLength={6}
+								disabled={!auth}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								placeholder="********"
+							/>
+						</div>
+
+						{error && (
+							<Alert variant="destructive">
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
+
+						<Button type="submit" disabled={loading || !auth} className="w-full">
+							{loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+						</Button>
+					</form>
+
+					<Button
 						type="button"
+						variant="ghost"
 						onClick={() => {
 							setIsSignUp(!isSignUp);
 							setError(null);
 						}}
-						className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+						className="w-full text-xs text-muted-foreground"
 					>
 						{isSignUp
 							? 'Already have an account? Sign in'
 							: "Don't have an account? Sign up"}
-					</button>
-				</div>
-			</div>
+					</Button>
+				</CardContent>
+			</Card>
 
-			{/* ── Mock Login (Dev Only) ── */}
-			{/* ── Mock Login (Dev Only) ── */}
 			<div className="absolute bottom-8 left-0 right-0 text-center">
-				<button
+				<Button
 					type="button"
+					variant="link"
 					onClick={() => {
 						const randomId = Math.floor(Math.random() * 10000);
 						const uid = `mock-user-${randomId}`;
@@ -131,10 +134,10 @@ export function AuthGate() {
 						};
 						setUser(mockUser);
 					}}
-					className="text-xs font-mono text-[var(--accent)] hover:underline opacity-50 hover:opacity-100 transition-opacity"
+					className="text-xs"
 				>
 					[DEV] Mock Login (Random User)
-				</button>
+				</Button>
 			</div>
 		</div>
 	);

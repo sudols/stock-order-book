@@ -34,13 +34,10 @@ export function createAppRouter(deps: {
         }),
       )
       .mutation(async ({ input }) => {
-        // 1. Authenticate
         const userId = await verifyFirebaseToken(input.token);
 
-        // 2. Ensure portfolio exists
         portfolioManager.initializeUser(userId);
 
-        // 3. Build order
         const order: Order = {
           id: uuidv4(),
           userId,
@@ -50,10 +47,8 @@ export function createAppRouter(deps: {
           timestamp: Date.now(),
         };
 
-        // 4. Execute
         const result = matchingEngine.placeOrder(order);
 
-        // 5. Broadcast updated book
         io.emit('orderbook', {
           bids: orderBook.getTop10Bids(),
           asks: orderBook.getTop10Asks(),
