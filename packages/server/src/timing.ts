@@ -22,7 +22,7 @@ import { MatchingEngine } from './matching-engine.js';
 
 // Config
 const TRADE_COUNTS = [10, 100, 500, 1000, 2500, 5000, 10000];
-const RUNS_PER_N = 2;
+const RUNS_PER_N = 10;
 const PRICE = 0.01;
 const CHUNK_SIZE = 10_000; // Engine hard limit per single order quantity
 
