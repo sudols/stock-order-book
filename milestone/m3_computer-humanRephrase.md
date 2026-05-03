@@ -352,24 +352,19 @@ A7 Market marker script would be used to generate live order flow for testing
 
 ## 5.1 Overall Description
 
-This project is an educational stock order book simulator built for the Design Thinking and Innovation course at Bennett University. It is designed to help students in technical programs understand not just how trades work financially but how they are executed computationally.
-
-The system is organized as a monorepo with three main packages. The client package is a React application using Zustand for state management and Socket.io-client for real-time updates. The server package is a Node.js backend containing tRPC routes, matching engine, WebSocket server, and portfolio management. The shared package holds the Order, Trade, and Portfolio TypeScript interfaces used for type consistency between client and server — it does not have runtime behavior on its own.
-
-The project started with a plan to have separate frontend and backend repositories. That turned out to be too complicated for coordination, so a monorepo approach was used instead. Similarly, a custom auth system was initially planned but was replaced by Firebase because the hassle was not proportional to what the project needed.
-
-In the Go integration version on the feature branch, the Node.js server sends matching requests to a separate Go service over HTTP/JSON on localhost. The Go service processes matching and returns trades and remaining order state, then Node.js updates portfolios and broadcasts via Socket.io.
+Designed as a unified repository, the system is organized into three main packages: client, server, and shared, ensuring better structure and easier management. The frontend is built using React to create a responsive and interactive interface. Tailwind CSS is used to style the application and maintain a clean design. For real-time updates, Socket.IO is integrated along with Firebase Authentication to securely manage user login and access.TRPC is used to handle communication between the frontend and backend, while Zustand efficiently manages the application state, ensuring smooth data flow across components and improving overall performance. The shared package helps in reusing common logic and data structures across both client and server, making the system more maintainable and consistent.
 
 ## 5.2 Users and Roles
 
-| User                | Description                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Trader / End User   | Logs in, places buy or sell orders, views order book depth and trade history, sees portfolio update after a match   |
-| System Backend      | Validates requests, verifies auth, checks portfolio balance, calls matching logic, broadcasts updates via WebSocket |
-| Matching Engine     | Executes price-time priority matching, returns trades and remaining order state                                     |
-| Market Maker Script | Auto-generates order flow for demo and testing sessions                                                             |
-| Developer           | Maintains frontend, backend, data structures, documentation                                                         |
-| Mentor / Evaluator  | Reviews system design, output correctness, and documentation quality                                                |
+| User | Description |
+| ---- | ----------- |
+
+User Description
+Trader / End User Allows users to log in, place buy or sell orders, view the order book, and track their portfolio.
+System Backend Handles validation, balance checks, order matching, and update notifications
+Matching Engine Uses price-time priority to match orders and shows executed trades along with pending ones.
+Developer Handles the user interface, server-side operations, and data structure management
+Mentor / Evaluator Evaluates design, verifies output, and checks documentation quality.
 
 **Table 12: Users and Roles**
 
@@ -570,13 +565,8 @@ To note. Current system operates in in-memory. So there are no actual database t
 
 ## 6.1 UI Description
 
-The frontend is a desktop-only React application. There is no mobile-responsive design because adding it would have complicated the layout significantly, and the primary demo environment is desktop anyway.
-
-The interface is divided into three main panels. The left panel shows the order book with bids and asks displayed as a depth chart-like view, color-coded, with the top ten levels for each side updating continuously. The center panel is the trade placement form where users can enter buy or sell orders with price and quantity. The right panel shows trade history, only matched trades appear here — unmatched resting orders are not shown in this panel.
-
-Auth is handled through Firebase to avoid spam or bot entries during demo sessions. The layout was intentionally kept simple because adding more elements made it look cluttered and harder to maintain on different screen sizes.
-
-One known usability issue from testing is that bid and ask side identification is done purely through color code without labels, which caused confusion for users with no prior order book experience. A tooltip toggle is planned for a future iteration.
+The client side of the project is developed using React. It handles user-related data, including user state, bids, asks, and portfolio information, with the help of Zustand for efficient and streamlined state management. The frontend is integrated with Socket.IO to receive real-time updates of the order book, allowing the user interface to automatically reflect any changes broadcasted by the backend.
+The main interface includes key components such as an order book view, a trade entry form, and a portfolio section. While the interface is relatively simple in structure, it effectively showcases the essential functionalities of the system. The design approach prioritizes the trading workflow, ensuring clarity and usability without introducing unnecessary features or complexity.
 
 ## 6.2 UI Mockup
 
@@ -651,19 +641,14 @@ The naive version uses full sorted arrays and re-sorts on insertion, the hybrid 
 
 ## 8.1 Goals / Vision
 
-The original vision of the project was to build a working real-time stock order book system with proper matching behavior, user portfolio tracking, and live frontend updates. [cite:3][cite:4] During development, this vision expanded a bit because the team also explored how the matching layer could be optimized and later replaced by a Go service without changing the external behavior of the product. [cite:8]
+The project originally started with the goal of building a real-time stock order book system that could handle proper order matching, track user portfolios, and provide live updates on the frontend. As development progressed, the scope naturally evolved, and the team began exploring ways to improve the efficiency of the matching system. This also led to experimenting with the idea of replacing the matching layer with a service built using Go programming language, while keeping the overall behavior and user experience of the system unchanged.
 
 So, by the end, the project became not only a trading simulator but also a performance-oriented backend design exercise.
 
 ## 8.2 Delivered Solution
 
-The delivered solution includes a working React frontend, a Node.js backend with tRPC and Socket.io, shared TypeScript models, and real-time order book updates. The three-panel UI layout is functional for desktop use and covers viewing orders, placing trades, and checking matched trade history.
-
-On the backend, three versions of the OrderBook were implemented and benchmarked — naive full-sort, hybrid HashMap with sorted arrays, and optimized linked-list per price level — with benchmark scripts confirming a roughly 6x performance difference between worst and best version. The Go matching engine integration on the feature branch additionally demonstrates that the compute-heavy matching logic can be moved to a compiled language service while keeping the frontend and API layer unchanged.
-
-User testing with four participants revealed usability issues including missing labels on the bid/ask columns, a silent validation failure on decimal quantity input, and lack of persistent trade history across sessions. These were noted and partially addressed during the development cycle.
-
-The project is open source under MIT license and is built entirely on open source dependencies, which means there is no software licensing cost for anyone who wants to run or extend it.
+The final solution brings together a React frontend, a Node.js backend, and shared TypeScript models to keep everything consistent. It supports real-time updates through Socket.IO and includes well-documented order book and matching logic. In addition, a matching engine built using the Go programming language has been integrated with the Node.js backend via HTTP/JSON, while keeping the overall request–response flow the same from the frontend’s perspective.
+Another important outcome of the project is how the design evolved over time. It starts with a simple (naive) order book, moves to an improved hybrid structure, and finally reaches an optimized linked-list-based implementation. This progression clearly reflects the team’s focus on performance improvements and thoughtful system design.
 
 ## 8.3 Remaining Work
 
