@@ -1,24 +1,5 @@
 import type { Order } from '@orderbook/shared';
 
-/**
- * OrderBook — Naive Implementation (Intentionally Slow)
- *
- * Design:
- *   • Full sorted Order[] arrays per side (bids, asks)
- *   • Re-sorts entire array on every insert → O(n log n)
- *   • Linear search + splice on removal → O(n)
- *
- * Purpose:
- *   Demonstrates why naive approaches degrade at scale.
- *   Recreates the "old implementation" behavior mentioned in orderbook.ts.
- *
- * Complexity (n = total orders):
- *   addOrder    → O(n log n)  full array sort on every insert
- *   removeOrder → O(n)        findIndex scan + splice shift
- *   getBestBid  → O(1)        index 0 of sorted array
- *   getBestAsk  → O(1)        index 0 of sorted array
- *   getTop10    → O(1)        slice first 10
- */
 export class OrderBook {
   private bids: Order[] = [];
   private asks: Order[] = [];
