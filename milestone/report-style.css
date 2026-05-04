@@ -1,0 +1,171 @@
+@page {
+	size: A4;
+	margin: 20mm 18mm 20mm 18mm;
+}
+
+html,
+body {
+	font-family: 'Times New Roman', Times, serif;
+	color: #000;
+	font-size: 12pt;
+	line-height: 1.45;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+}
+
+.page-break {
+	display: block;
+	page-break-after: always;
+	break-after: page;
+	height: 0;
+	margin: 0;
+	padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-weight: 700;
+	text-transform: uppercase;
+	text-align: center;
+	page-break-after: avoid;
+}
+
+h1 {
+	font-size: 18pt;
+	margin: 18pt 0 10pt;
+}
+
+h2 {
+	font-size: 14pt;
+	margin: 16pt 0 8pt;
+}
+
+h3 {
+	font-size: 12pt;
+	margin: 14pt 0 6pt;
+}
+
+p,
+li,
+td,
+th {
+	font-size: 12pt;
+}
+
+p {
+	text-align: justify;
+	margin: 0 0 10pt;
+}
+
+ul,
+ol {
+	margin: 0 0 10pt 18pt;
+}
+
+blockquote {
+	margin: 10pt 0;
+	padding-left: 12pt;
+	border-left: 2px solid #999;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 10pt 0 14pt;
+	page-break-inside: avoid;
+}
+
+table,
+th,
+td {
+	border: 1px solid #000;
+}
+
+th,
+td {
+	padding: 6pt 8pt;
+	vertical-align: top;
+}
+
+pre,
+code {
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 10pt;
+}
+
+pre {
+	white-space: pre-wrap;
+	page-break-inside: avoid;
+}
+
+img {
+	max-width: 100%;
+}
+
+.figure-block {
+	break-inside: avoid;
+	page-break-inside: avoid;
+	margin: 0 0 10pt;
+}
+
+.figure-block p {
+	text-align: center;
+	margin: 0 0 8pt;
+}
+
+.figure-block img {
+	display: block;
+	width: 100%;
+	max-height: 145mm;
+	object-fit: contain;
+	margin: 0 auto;
+}
+
+.uml-figure {
+	max-width: 100%;
+}
+
+hr {
+	border: 0;
+	border-top: 1px solid #000;
+	margin: 12pt 0;
+}
+
+/* Make the opening section behave a bit like a title page */
+body > h1:first-of-type {
+	margin-top: 24pt;
+	font-size: 20pt;
+	letter-spacing: 0.5pt;
+}
+
+body > h1:first-of-type + p {
+	text-align: center;
+}
+
+@media print {
+	a[href]::after {
+		content: '';
+	}
+
+	.page-break {
+		display: block;
+	}
+
+	.figure-block {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+}
+
+/* Allow specific large UML diagrams to render at full size (may overflow page) */
+.uml-large img {
+	width: auto;
+	max-width: none;
+	max-height: none;
+	object-fit: none;
+}

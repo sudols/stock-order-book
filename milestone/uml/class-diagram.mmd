@@ -1,0 +1,35 @@
+classDiagram
+    class OrderBook {
+        +addOrder(order)
+        +removeOrder(orderId)
+        +getBestBid()
+        +getBestAsk()
+        +getTop10Bids()
+        +getTop10Asks()
+    }
+
+    class MatchingEngine {
+        +placeOrder(order)
+        +matchOrder(order)
+    }
+
+    class PortfolioManager {
+        +canAfford(userId, order)
+        +executeTrade(trade)
+        +getPortfolio(userId)
+    }
+
+    class AppRouter {
+        +placeOrder()
+        +getPortfolio()
+    }
+
+    class GoMatchingEngineClient {
+        +placeOrder(order)
+        +health()
+    }
+
+    MatchingEngine --> OrderBook
+    MatchingEngine --> PortfolioManager
+    AppRouter --> MatchingEngine
+    AppRouter --> GoMatchingEngineClient

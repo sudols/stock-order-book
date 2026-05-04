@@ -3,24 +3,22 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import type { Order } from '@orderbook/shared';
 import { verifyFirebaseToken } from '../middleware/auth.js';
-import type { MatchingEngine } from '../matching-engine.js';
+import type { GoMatchingEngineClient } from '../go-client.js';
 import type { PortfolioManager } from '../portfolio-manager.js';
-import type { OrderBook } from '../orderbook.js';
 import type { Server as SocketServer } from 'socket.io';
 
 const t = initTRPC.create();
 
 /**
  * Factory — creates the tRPC router with access to the engine,
- * portfolio manager, order book, and Socket.io server.
+ * portfolio manager, and Socket.io server.
  */
 export function createAppRouter(deps: {
-  matchingEngine: MatchingEngine;
+  matchingEngine: GoMatchingEngineClient;
   portfolioManager: PortfolioManager;
-  orderBook: OrderBook;
   io: SocketServer;
 }) {
-  const { matchingEngine, portfolioManager, orderBook, io } = deps;
+  const { matchingEngine, portfolioManager, io } = deps;
 
   return t.router({
     // ── Place Order ──────────────────────────────────────
@@ -50,13 +48,26 @@ export function createAppRouter(deps: {
           timestamp: Date.now(),
         };
 
-        // 4. Execute
-        const result = matchingEngine.placeOrder(order);
+        // 4. Check if user can afford this order
+        if (!portfolioManager.canAfford(userId, order.side, order.price, order.quantity)) {
+          return { error: 'Insufficient funds' };
+        }
 
-        // 5. Broadcast updated book
+        // 5. Execute via Go matching engine (HTTP call)
+        const result = await matchingEngine.placeOrder(order);
+
+        // 6. If successful, update portfolios for executed trades
+        if (!result.error && result.trades) {
+          for (const trade of result.trades) {
+            portfolioManager.executeTrade(trade);
+          }
+        }
+
+        // 7. Broadcast updated book
+        const orderbook = await matchingEngine.getOrderBook();
         io.emit('orderbook', {
-          bids: orderBook.getTop10Bids(),
-          asks: orderBook.getTop10Asks(),
+          bids: orderbook.bids,
+          asks: orderbook.asks,
           timestamp: Date.now(),
         });
 
@@ -73,12 +84,13 @@ export function createAppRouter(deps: {
       )
       .mutation(async ({ input }) => {
         const userId = await verifyFirebaseToken(input.token);
-        const result = matchingEngine.cancelOrder(input.orderId, userId);
+        const result = await matchingEngine.cancelOrder(input.orderId, userId);
 
         // Broadcast updated book
+        const orderbook = await matchingEngine.getOrderBook();
         io.emit('orderbook', {
-          bids: orderBook.getTop10Bids(),
-          asks: orderBook.getTop10Asks(),
+          bids: orderbook.bids,
+          asks: orderbook.asks,
           timestamp: Date.now(),
         });
 
@@ -95,10 +107,11 @@ export function createAppRouter(deps: {
       }),
 
     // ── Get OrderBook Snapshot ────────────────────────────
-    getOrderBook: t.procedure.query(() => {
+    getOrderBook: t.procedure.query(async () => {
+      const orderbook = await matchingEngine.getOrderBook();
       return {
-        bids: orderBook.getTop10Bids(),
-        asks: orderBook.getTop10Asks(),
+        bids: orderbook.bids,
+        asks: orderbook.asks,
         timestamp: Date.now(),
       };
     }),

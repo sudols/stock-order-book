@@ -1,0 +1,37 @@
+erDiagram
+    USER ||--|| PORTFOLIO : owns
+    USER ||--o{ ORDER : places
+    ORDER ||--o{ TRADE : participates_as_maker
+    ORDER ||--o{ TRADE : participates_as_taker
+
+    USER {
+        string user_id PK
+        string email
+        string auth_provider
+    }
+
+    PORTFOLIO {
+        string portfolio_id PK
+        string user_id FK
+        float usd_balance
+        float stock_quantity
+    }
+
+    ORDER {
+        string order_id PK
+        string user_id FK
+        string side
+        float price
+        float quantity
+        long timestamp
+        string status
+    }
+
+    TRADE {
+        string trade_id PK
+        string buy_order_id FK
+        string sell_order_id FK
+        float execution_price
+        float quantity
+        long timestamp
+    }

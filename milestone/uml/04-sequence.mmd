@@ -1,0 +1,111 @@
+---
+title: Sequence Diagram — Place Order (Full Lifecycle)
+---
+sequenceDiagram
+    actor User
+    participant TF as TradeForm<br/>(React Component)
+    participant Store as Zustand Store<br/>(store.ts)
+    participant TRPC as tRPC Client<br/>(trpc.ts)
+    participant FB_C as Firebase Auth<br/>(Client SDK)
+    participant Server as Express Server<br/>:3001/trpc
+    participant Auth as Auth Middleware<br/>(middleware/auth.ts)
+    participant FB_S as Firebase Admin<br/>(Google Cloud)
+    participant ME as MatchingEngine<br/>(matching-engine.ts)
+    participant OB as OrderBook<br/>(orderbook.ts)
+    participant PM as PortfolioManager<br/>(portfolio-manager.ts)
+    participant IO as Socket.io Server
+    participant WS as Socket.io Clients<br/>(all browsers)
+
+    User->>TF: Fill in side / price / qty, click Submit
+
+    TF->>TF: Client-side validate (price > 0, qty > 0)
+    alt Invalid input
+        TF-->>User: Show inline error message
+    end
+
+    TF->>FB_C: getIdToken()
+    FB_C-->>TF: idToken (JWT)
+
+    TF->>TRPC: trpc.placeOrder.mutate({ token, side, price, qty })
+    TRPC->>Server: HTTP POST /trpc/placeOrder
+
+    Server->>Auth: verifyFirebaseToken(token)
+    Auth->>FB_S: verifyIdToken(token)
+    FB_S-->>Auth: decoded userId
+    Auth-->>Server: userId
+
+    alt Invalid / expired token
+        Server-->>TRPC: error: "Unauthorized"
+        TRPC-->>TF: error response
+        TF-->>User: Show error
+    end
+
+    Server->>PM: initializeUser(userId)
+    PM-->>Server: Portfolio (new or existing)
+
+    Server->>ME: placeOrder({ id, userId, side, price, qty, timestamp })
+
+    ME->>ME: Validate (price, qty bounds)
+    alt Validation fails
+        ME-->>Server: { error: "Price must be positive" }
+        Server-->>TRPC: error response
+        TRPC-->>TF: error
+        TF-->>User: Show error
+    end
+
+    ME->>PM: canAfford(userId, side, price, qty)
+    PM-->>ME: true / false
+    alt Insufficient funds
+        ME-->>Server: { error: "Insufficient funds" }
+        Server-->>TRPC: error response
+        TRPC-->>TF: error
+        TF-->>User: Show "Insufficient funds"
+    end
+
+    loop Price-Time Priority Matching Loop
+        ME->>OB: getBestAsk() or getBestBid()
+        OB-->>ME: oppositeOrder | null
+
+        alt No opposite order or price does not cross
+            ME->>ME: break loop
+        end
+
+        ME->>ME: tradeQty = min(remainingQty, oppositeOrder.qty)
+        ME->>ME: Create Trade { id, buyOrderId, sellOrderId,<br/>buyerId, sellerId, price, qty }
+
+        alt Opposite order fully consumed
+            ME->>OB: removeOrder(opposite.id)
+        else Opposite order partially filled
+            ME->>OB: opposite.quantity -= tradeQty (in-place mutation)
+        end
+
+        ME->>PM: executeTrade(trade)
+        PM->>PM: buyer.usd -= price×qty<br/>buyer.stocks += qty
+        PM->>PM: seller.usd += price×qty<br/>seller.stocks -= qty
+        PM-->>ME: done
+
+        ME->>ME: remainingQty -= tradeQty
+    end
+
+    alt remainingQty > 0 (order partially or fully unmatched)
+        ME->>OB: addOrder(restingOrder)
+        Note over OB: Insert into bidsByPrice / asksByPrice map<br/>Binary-search insert into sorted price-level array
+    end
+
+    ME-->>Server: { success: { trades[], remainingOrder | null } }
+
+    Server->>OB: getTop10Bids()
+    OB-->>Server: bids: Order[]
+    Server->>OB: getTop10Asks()
+    OB-->>Server: asks: Order[]
+
+    Server->>IO: io.emit("orderbook", { bids, asks, timestamp })
+    IO->>WS: Broadcast to all connected clients
+
+    WS->>Store: set({ bids, asks, lastUpdate })
+    Store-->>WS: re-render triggered
+
+    Server-->>TRPC: { success: { trades[], remainingOrder } }
+    TRPC-->>TF: result
+    TF->>Store: setPortfolio() after re-fetching getPortfolio
+    TF-->>User: Order confirmed, book updates live

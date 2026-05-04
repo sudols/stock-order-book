@@ -1,0 +1,44 @@
+---
+title: System Architecture — Stock Order Book
+---
+graph TB
+    subgraph CLIENT["Client (React + Vite)"]
+        UI["UI Components"]
+        STORE["Zustand State Store"]
+        UI <--> STORE
+    end
+
+    subgraph SERVER["Server (Node.js + Express)"]
+        API["tRPC API Router"]
+        GOCLIENT["Go Engine Client"]
+        PM["Portfolio Manager"]
+        API --> GOCLIENT
+        API --> PM
+    end
+
+    subgraph GOSERVER["Matching Engine Service (Go)"]
+        ENGINE["Go Matching Engine"]
+        OB["Optimized Order Book"]
+        ENGINE --> OB
+    end
+
+    subgraph SHARED["Shared Types (TypeScript)"]
+        TYPES["Order · Trade · Portfolio"]
+    end
+
+    FIREBASE["Firebase Authentication"]
+
+    CLIENT -- "HTTP (tRPC mutations)" --> SERVER
+    SERVER -- "WebSocket (Socket.io)<br/>live order book updates" --> CLIENT
+    CLIENT -- "sign in / ID token" --> FIREBASE
+    SERVER -- "verify ID token" --> FIREBASE
+    SERVER -- "TCP Socket" --> GOSERVER
+    GOSERVER -- "Execution Results" --> SERVER
+    CLIENT -. "shared interfaces" .-> SHARED
+    SERVER -. "shared interfaces" .-> SHARED
+
+    style CLIENT fill:#1e3a5f,color:#ffffff,stroke:#4a90d9
+    style SERVER fill:#1a3a2a,color:#ffffff,stroke:#4caf50
+    style GOSERVER fill:#1e3f42,color:#ffffff,stroke:#00add8
+    style SHARED fill:#3a2a1a,color:#ffffff,stroke:#ff9800
+    style FIREBASE fill:#3a1a1a,color:#ffffff,stroke:#f44336

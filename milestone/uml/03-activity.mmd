@@ -1,0 +1,78 @@
+---
+title: Activity Diagram — Place Order Flow
+---
+flowchart TD
+    START([User clicks Submit<br/>in TradeForm]) --> VALIDATE_INPUT
+
+    VALIDATE_INPUT{"Client-side<br/>validation<br/>price > 0 ?<br/>qty > 0 ?"}
+    VALIDATE_INPUT -- "Invalid" --> SHOW_ERROR["Show inline error<br/>in TradeForm"]
+    SHOW_ERROR --> END_ERROR([Flow ends])
+
+    VALIDATE_INPUT -- "Valid" --> GET_TOKEN["Get Firebase ID Token<br/>firebase.currentUser.getIdToken()"]
+
+    GET_TOKEN --> SEND_MUTATION["Send tRPC mutation<br/>placeOrder({ token, side, price, qty })"]
+
+    SEND_MUTATION --> VERIFY_TOKEN["Server: verifyFirebaseToken(token)<br/>(middleware/auth.ts)"]
+
+    VERIFY_TOKEN -- "Invalid token" --> RETURN_AUTH_ERR["Return error:<br/>'Unauthorized'"]
+    RETURN_AUTH_ERR --> SHOW_ERR2["Client shows error"] --> END_AUTH([Flow ends])
+
+    VERIFY_TOKEN -- "userId resolved" --> INIT_PORTFOLIO["portfolioManager.initializeUser(userId)<br/>($10,000 USD + 100 stocks if new)"]
+
+    INIT_PORTFOLIO --> BUILD_ORDER["Build Order object<br/>{ id: uuid, userId, side,<br/>  price, qty, timestamp }"]
+
+    BUILD_ORDER --> ENGINE_VALIDATE{"MatchingEngine<br/>Input Validation<br/>price <= 0 ?<br/>qty <= 0 ?<br/>price > 1,000,000 ?<br/>qty > 10,000 ?"}
+    ENGINE_VALIDATE -- "Invalid" --> RETURN_VAL_ERR["Return error string"] --> SHOW_ERR3["Client shows error"] --> END_VAL([Flow ends])
+
+    ENGINE_VALIDATE -- "Valid" --> CAN_AFFORD{"portfolioManager<br/>.canAfford(userId,<br/>side, price, qty)<br/>buy: USD >= price*qty<br/>sell: stocks >= qty"}
+    CAN_AFFORD -- "No" --> RETURN_FUNDS_ERR["Return error:<br/>'Insufficient funds'"] --> SHOW_ERR4["Client shows error"] --> END_FUNDS([Flow ends])
+
+    CAN_AFFORD -- "Yes" --> MATCH_LOOP
+
+    subgraph MATCH_LOOP["Matching Loop (Price-Time Priority)"]
+        direction TB
+        GET_OPPOSITE{"Get opposite<br/>best order<br/>buy -> getBestAsk<br/>sell -> getBestBid"}
+        GET_OPPOSITE -- "No opposite<br/>order exists" --> NO_MATCH[/"Break loop"/]
+        GET_OPPOSITE -- "Opposite exists" --> PRICE_CHECK{"Price crosses?<br/>buy: order.price greater than or equal to opposite.price<br/>sell: order.price less than or equal to opposite.price"}
+        PRICE_CHECK -- "No cross" --> NO_MATCH
+        PRICE_CHECK -- "Yes" --> EXECUTE_TRADE["Execute trade<br/>tradeQty = min(remaining, opposite.qty)<br/>Create Trade { id, buyOrderId,<br/>sellOrderId, price, qty }"]
+        EXECUTE_TRADE --> UPDATE_MAKER{"opposite.qty<br/>== tradeQty ?"}
+        UPDATE_MAKER -- "Yes (fully filled)" --> REMOVE_MAKER["orderBook.removeOrder(opposite.id)"]
+        UPDATE_MAKER -- "No (partial fill)" --> REDUCE_MAKER["opposite.quantity -= tradeQty"]
+        REMOVE_MAKER --> UPDATE_PORTFOLIOS
+        REDUCE_MAKER --> UPDATE_PORTFOLIOS
+        UPDATE_PORTFOLIOS["portfolioManager.executeTrade(trade)<br/>buyer: usd -= price*qty, stocks += qty<br/>seller: usd += price*qty, stocks -= qty"]
+        UPDATE_PORTFOLIOS --> REDUCE_REMAINING["remainingQty -= tradeQty"]
+        REDUCE_REMAINING --> CHECK_REMAINING{"remainingQty<br/>> 0 ?"}
+        CHECK_REMAINING -- "Yes" --> GET_OPPOSITE
+        CHECK_REMAINING -- "No" --> FULLY_FILLED[/"Break loop<br/>(fully filled)"/]
+    end
+
+    NO_MATCH --> REST_CHECK
+    FULLY_FILLED --> REST_CHECK
+
+    REST_CHECK{"remainingQty<br/>> 0 ?"}
+    REST_CHECK -- "Yes - resting order" --> ADD_TO_BOOK["orderBook.addOrder(restingOrder)<br/>(inserted into bidsByPrice or<br/>asksByPrice + sorted price level array)"]
+    REST_CHECK -- "No - fully filled" --> BROADCAST
+
+    ADD_TO_BOOK --> BROADCAST
+
+    BROADCAST["io.emit('orderbook', {<br/>  bids: orderBook.getTop10Bids(),<br/>  asks: orderBook.getTop10Asks(),<br/>  timestamp: Date.now()<br/>})"]
+
+    BROADCAST --> ALL_CLIENTS["All connected Socket.io<br/>clients receive snapshot"]
+
+    ALL_CLIENTS --> ZUSTAND["Client: Zustand store<br/>sets bids, asks, lastUpdate"]
+
+    ZUSTAND --> RERENDER["React re-renders<br/>OrderBookView + TradeHistory"]
+
+    RERENDER --> RETURN_RESULT["tRPC returns result to caller<br/>{ trades[], remainingOrder | null }"]
+
+    RETURN_RESULT --> END_SUCCESS([Order placed successfully])
+
+    style START fill:#166534,color:#fff
+    style END_SUCCESS fill:#166534,color:#fff
+    style END_ERROR fill:#991b1b,color:#fff
+    style END_AUTH fill:#991b1b,color:#fff
+    style END_VAL fill:#991b1b,color:#fff
+    style END_FUNDS fill:#991b1b,color:#fff
+    style MATCH_LOOP fill:#1e293b,color:#f1f5f9,stroke:#475569
