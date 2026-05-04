@@ -1,24 +1,6 @@
-# STOCK ORDER BOOK WITH REAL-TIME MATCHING ENGINE
-
-## A PROJECT REPORT
-
-**BY**
-
-**TEAM NO. 54**
-
-**Member 1 Name (Enrollment No.)**  
-**Member 2 Name (Enrollment No.)**  
-**Member 3 Name (Enrollment No.)**  
-**Member 4 Name (Enrollment No.)**
-
-**SUBMITTED TO**
-
-**SCHOOL OF COMPUTER SCIENCE ENGINEERING AND TECHNOLOGY, BENNETT UNIVERSITY**  
-**GREATER NOIDA, 201310, UTTAR PRADESH, INDIA**
-
-**May 2026**
-
----
+<div style="text-align:center; page-break-after: always;">
+  <img src="cover-page-1.png" alt="Cover Page" style="width:100%; height:auto; display:block; margin:0 auto;" />
+</div>
 
 # DECLARATION
 
@@ -35,7 +17,7 @@ The matter and results presented in this report have not been submitted by us fo
 **Sameer Bhati**  
 (**S24BCAU0106**)
 
----
+<div class="page-break"></div>
 
 # ACKNOWLEDGEMENT
 
@@ -54,7 +36,7 @@ Also, we are thankful to our friends and classmates who gave feedback on the sys
 **Sameer Bhati**  
 (**S24BCAU0106**)
 
----
+<div class="page-break"></div>
 
 # TABLE OF CONTENTS
 
@@ -98,7 +80,7 @@ Also, we are thankful to our friends and classmates who gave feedback on the sys
   - [8.3 Remaining Work](#83-remaining-work)
 - [REFERENCES](#references)
 
----
+<div class="page-break"></div>
 
 # LIST OF TABLES
 
@@ -115,7 +97,7 @@ Also, we are thankful to our friends and classmates who gave feedback on the sys
 11. Table 11: Deliverables
 12. Table 12: Users and Roles
 
----
+<div class="page-break"></div>
 
 # LIST OF FIGURES
 
@@ -127,7 +109,7 @@ Also, we are thankful to our friends and classmates who gave feedback on the sys
 6. Figure 6: ER Diagram
 7. Figure 7: UI Mockup
 
----
+<div class="page-break"></div>
 
 # LIST OF ABBREVIATIONS
 
@@ -142,7 +124,7 @@ Also, we are thankful to our friends and classmates who gave feedback on the sys
 | UI           | User Interface                    |
 | WS           | WebSocket                         |
 
----
+<div class="page-break"></div>
 
 # ABSTRACT
 
@@ -152,6 +134,8 @@ Our main idea was to implement a price time priority matching system that was fa
 For the final version, we used a linked queue for each price level that solved the order removal complexity. In the same time, we also created a GO rewrite of the matching engine, while following the same final version's data structure and integrated it as a separate service that the Node.js server could call without changing any major backend logic.
 
 There was also full focus on providing a secure platform Firebase authentication. We also made sure that system used fast broadcasting services like Socket.io to make sure updates are instant while being efficient. The final result was not just a simple UI demo, rather it showcased a well designed system, along with algorithm choice, service creation.
+
+<div class="page-break"></div>
 
 # 1. INTRODUCTION
 
@@ -386,176 +370,65 @@ Major backlog items:
 
 ### 5.3.2 Architecture Diagram
 
+<div class="figure-block uml-figure">
+
 **Figure 1: Architecture Diagram**
 
-```mermaid
-flowchart TD
-    A[React Frontend] -->|tRPC Requests| B[Node.js Server]
-    A -->|Socket.io Client| B
-    B --> C[Firebase Auth Verification]
-    B --> D[Portfolio Manager]
-    B -->|HTTP/JSON| E[Go Matching Engine]
-    E --> F[OrderBook]
-    E --> G[Matching Logic]
-    B -->|Broadcast Updates| A
-```
+![Architecture Diagram](uml/arch.png)
+
+</div>
 
 ### 5.3.3 Use Case Diagram
 
+<div class="figure-block uml-figure">
+
 **Figure 2: Use Case Diagram**
 
-```mermaid
-flowchart LR
-    U[Trader]
-    UC1((Sign In))
-    UC2((View Order Book))
-    UC3((Place Buy Order))
-    UC4((Place Sell Order))
-    UC5((View Portfolio))
-    UC6((Receive Real-time Updates))
+![Use Case Diagram](uml/usecase.png)
 
-    U --> UC1
-    U --> UC2
-    U --> UC3
-    U --> UC4
-    U --> UC5
-    U --> UC6
-```
+</div>
 
 ### 5.3.4 Class Diagram
 
+<div class="figure-block uml-figure">
+
 **Figure 3: Class Diagram**
 
-```mermaid
-classDiagram
-    class OrderBook {
-        +addOrder(order)
-        +removeOrder(orderId)
-        +getBestBid()
-        +getBestAsk()
-        +getTop10Bids()
-        +getTop10Asks()
-    }
+![Class Diagram](uml/class-diagram.svg)
 
-    class MatchingEngine {
-        +placeOrder(order)
-        +matchOrder(order)
-    }
-
-    class PortfolioManager {
-        +canAfford(userId, order)
-        +executeTrade(trade)
-        +getPortfolio(userId)
-    }
-
-    class AppRouter {
-        +placeOrder()
-        +getPortfolio()
-    }
-
-    class GoMatchingEngineClient {
-        +placeOrder(order)
-        +health()
-    }
-
-    MatchingEngine --> OrderBook
-    MatchingEngine --> PortfolioManager
-    AppRouter --> MatchingEngine
-    AppRouter --> GoMatchingEngineClient
-```
+</div>
 
 This class level view shows the order book handling storage, matching engine logic, portfolio manager tracking.
 
 ### 5.3.5 Activity Diagram
 
+<div class="figure-block uml-figure uml-large">
+
 **Figure 4: Activity Diagram**
 
-```mermaid
-flowchart TD
-    S([Start]) --> A[User submits order]
-    A --> B[Validate auth token]
-    B --> C[Validate price and quantity]
-    C --> D[Check user funds or stock]
-    D --> E{Valid?}
-    E -- No --> F[Reject order]
-    E -- Yes --> G[Send to matching engine]
-    G --> H{Match exists?}
-    H -- Yes --> I[Execute trade]
-    I --> J[Update order book]
-    J --> K[Update portfolios]
-    K --> L[Broadcast orderbook]
-    L --> M([End])
-    H -- No --> N[Rest remaining order]
-    N --> L
-    F --> M
-```
+![Activity Diagram](uml/activity.svg)
+
+</div>
 
 ### 5.3.6 Sequence Diagram
 
+<div class="figure-block uml-figure">
+
 **Figure 5: Sequence Diagram**
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant NodeServer
-    participant GoEngine
-    participant Portfolio
+![Sequence Diagram](uml/sequence-diagram.svg)
 
-    User->>Frontend: Submit buy/sell order
-    Frontend->>NodeServer: tRPC placeOrder()
-    NodeServer->>NodeServer: Verify auth
-    NodeServer->>Portfolio: canAfford()
-    Portfolio-->>NodeServer: OK / Reject
-    NodeServer->>GoEngine: HTTP POST /place-order
-    GoEngine-->>NodeServer: trades + remainingOrder
-    NodeServer->>Portfolio: executeTrade()
-    NodeServer-->>Frontend: Socket update + response
-```
+</div>
 
 ### 5.3.7 Data Architecture / ER Diagram
 
+<div class="figure-block uml-figure">
+
 **Figure 6: ER Diagram**
 
-```mermaid
-erDiagram
-    USER ||--|| PORTFOLIO : owns
-    USER ||--o{ ORDER : places
-    ORDER ||--o{ TRADE : participates_as_maker
-    ORDER ||--o{ TRADE : participates_as_taker
+![ER Diagram](uml/er-diagram.svg)
 
-    USER {
-        string user_id PK
-        string email
-        string auth_provider
-    }
-
-    PORTFOLIO {
-        string portfolio_id PK
-        string user_id FK
-        float usd_balance
-        float stock_quantity
-    }
-
-    ORDER {
-        string order_id PK
-        string user_id FK
-        string side
-        float price
-        float quantity
-        long timestamp
-        string status
-    }
-
-    TRADE {
-        string trade_id PK
-        string buy_order_id FK
-        string sell_order_id FK
-        float execution_price
-        float quantity
-        long timestamp
-    }
-```
+</div>
 
 To note. Current system operates in in-memory. So there are no actual database tables. This ER diagram is placed for a future release where persistent storage will be added.
 

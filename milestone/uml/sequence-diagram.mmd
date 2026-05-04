@@ -1,0 +1,16 @@
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant NodeServer
+    participant GoEngine
+    participant Portfolio
+
+    User->>Frontend: Submit buy/sell order
+    Frontend->>NodeServer: tRPC placeOrder()
+    NodeServer->>NodeServer: Verify auth
+    NodeServer->>Portfolio: canAfford()
+    Portfolio-->>NodeServer: OK / Reject
+    NodeServer->>GoEngine: HTTP POST /place-order
+    GoEngine-->>NodeServer: trades + remainingOrder
+    NodeServer->>Portfolio: executeTrade()
+    NodeServer-->>Frontend: Socket update + response
