@@ -155,13 +155,8 @@ There was also full focus on providing a secure platform Firebase authentication
 
 # 1. INTRODUCTION
 
-A trading system is a good example where computer science topics ( like, data structure and algorithm design ) meet with real software engineering.
-
-The project that we created, called as "Stock Order Book" is made to simulate a trading platform where users can place buy and set orders. Then the system matching with best prices. It sounds simple enough that we are just placing a BUY and SELL order, but complex enough that we can show how even changing a slight detail in data structure can make a big difference in performance when order grows exponentially.
-
-We used a modern tech stack that includes React.js for frontend. Backend with node.js. Matching engine being created with GO for fast low latency matching. For fast frontend updates, we used Socket.io to broadcast order book changes in real time. And authentication is handled with firebase for simplicity.
-
-The project is also useful from a learning side. It shows how a monorepo can help in keeping code organized, how real-time updates can be sent through sockets, and how backend services can be split based on responsibility rather than making one large file handle everything. [cite:4]
+We created this project named "Stock Order Book" for simulating buy and sell orders like a real trading platform. This will sound simple, but once we start to get into the data structure part of the matching engine, things take a U turn. And it also grows in complexity once we start to add performance constrains. For this project, we used a pretty modular tech stack, also a very popular one too. This includes React and Node.js, for frontend and backend respectively. And for the matching engine, we created a GO service for fast order matching. And this fast matching is shown to the frontend with Socket.io to broadcast the order book changes in real time.
+Security is handled with firebase.
 
 ## 1.1 Problem Statement
 
@@ -211,15 +206,14 @@ Project sole object was not to just create a feature based order book. But also 
 
 ## 3.1 Project Lifecycle
 
-Project followed an iterative development style close to Agile but not fully Agile. We sticked to it because that was what taught in previous courses as a good development approach.
+We followed the Agile model. It wasn't the full enterprise like, but a simplified one. We sticked to it because that was what taught in previous courses as a good development approach.
 
-Here is a summary of the project lifecycle:
+A quick info of the project lifecycle as:
 
-1. Initial monorepo and shared project setup. [cite:4]
-2. TypeScript order book and matching logic. [cite:4]
-3. Order book performance improvements through better data structures. [cite:10][cite:11]
-4. Go service integration for matching engine. [cite:8]
-5. Final benchmarking and comparison. [cite:8]
+1. Repo was setup
+2. Then the typescript interfaces and matching logic was developed
+3. There was performance backlogs, hence we improved the data structures
+4. A Go service was developed for lower and faster matching
 
 ## 3.2 Project Setup
 
@@ -352,7 +346,7 @@ A7 Market marker script would be used to generate live order flow for testing
 
 ## 5.1 Overall Description
 
-Designed as a unified repository, the system is organized into three main packages: client, server, and shared, ensuring better structure and easier management. The frontend is built using React to create a responsive and interactive interface. Tailwind CSS is used to style the application and maintain a clean design. For real-time updates, Socket.IO is integrated along with Firebase Authentication to securely manage user login and access.TRPC is used to handle communication between the frontend and backend, while Zustand efficiently manages the application state, ensuring smooth data flow across components and improving overall performance. The shared package helps in reusing common logic and data structures across both client and server, making the system more maintainable and consistent.
+This repository is a collection of three repos. Hence, we call it a monorepo. This contains, client, and server code, along with the shared type interfaces. This helped us in maintaining a better management. For frontend, we used React to quickly get responsive UI. With tailwind kicking in for the absolute speed. Then, for updates, Socker.Io is used with firebase for secure authentication. Communication between frontend and backend is done with TRPC for better performance than HTTP.
 
 ## 5.2 Users and Roles
 
@@ -367,8 +361,6 @@ Developer Handles the user interface, server-side operations, and data structure
 Mentor / Evaluator Evaluates design, verifies output, and checks documentation quality.
 
 **Table 12: Users and Roles**
-
-The main live user in this system is the trader. But, in design terms, the backend service and matching engine also behave like important actors because they perform autonomous logic in the full workflow. [cite:4][cite:8]
 
 ## 5.3 Design Diagrams / UML / Flow / E-R
 
@@ -565,8 +557,7 @@ To note. Current system operates in in-memory. So there are no actual database t
 
 ## 6.1 UI Description
 
-The client side of the project is developed using React. It handles user-related data, including user state, bids, asks, and portfolio information, with the help of Zustand for efficient and streamlined state management. The frontend is integrated with Socket.IO to receive real-time updates of the order book, allowing the user interface to automatically reflect any changes broadcasted by the backend.
-The main interface includes key components such as an order book view, a trade entry form, and a portfolio section. While the interface is relatively simple in structure, it effectively showcases the essential functionalities of the system. The design approach prioritizes the trading workflow, ensuring clarity and usability without introducing unnecessary features or complexity.
+As discussed earlier. We used React.js for the quick development of UI. This mainly handles the User form interaction like bids, asks orders and showing the portfolio information. This is then integrated with socket.io to receive updates from order book. The main components of UI include the order book, trade form and the portfolio section. UI was designed to be simple, because the main focus was on the backend logic and the matching engine.
 
 ## 6.2 UI Mockup
 
@@ -641,14 +632,11 @@ The naive version uses full sorted arrays and re-sorts on insertion, the hybrid 
 
 ## 8.1 Goals / Vision
 
-The project originally started with the goal of building a real-time stock order book system that could handle proper order matching, track user portfolios, and provide live updates on the frontend. As development progressed, the scope naturally evolved, and the team began exploring ways to improve the efficiency of the matching system. This also led to experimenting with the idea of replacing the matching layer with a service built using Go programming language, while keeping the overall behavior and user experience of the system unchanged.
-
-So, by the end, the project became not only a trading simulator but also a performance-oriented backend design exercise.
+Our original goal was to build a relatively simple order book matching logic, with simple buy and sell orders. But as we progressed through. We started exploring more into the performance side of matching engine. Hence, we found the GO lang to integrate the engine with. This was a major shift in project complexity. But the original behavior remained original with massive performance boosts.
 
 ## 8.2 Delivered Solution
 
-The final solution brings together a React frontend, a Node.js backend, and shared TypeScript models to keep everything consistent. It supports real-time updates through Socket.IO and includes well-documented order book and matching logic. In addition, a matching engine built using the Go programming language has been integrated with the Node.js backend via HTTP/JSON, while keeping the overall request–response flow the same from the frontend’s perspective.
-Another important outcome of the project is how the design evolved over time. It starts with a simple (naive) order book, moves to an improved hybrid structure, and finally reaches an optimized linked-list-based implementation. This progression clearly reflects the team’s focus on performance improvements and thoughtful system design.
+In the end, we created a project that bundles together a react frontend with a node.js backend. That uses modern features like socket.io for broadcasting and a well documented codebase with documentation, diagrams and good amount of comments. While the go languagej communication is done with a simple HTTP/JSON feature. We originally planned to use gRPC but due to time constrains. We used the HTTP path instead. There were also performance improvements in the data structure design of matching engine with 3 level optimizations.
 
 ## 8.3 Remaining Work
 
@@ -658,11 +646,11 @@ Based on the planned weeks 9-12 and known outstanding items:
 
 - To deploy a live persistent demo URL so it can be accessed without local setup.
 
-- Because a demo URL is setup. There needs to be CI/CD with GitHub Actions to automatically deploy on code changes.
+- Because a demo URL is setup is also planned. There needs to be CI/CD with GitHub Actions to automatically deploy on code changes.
 
-- Create a Docker compose file for portable simulation testing
+- There will also be a Docker compose file for portable deployment
 
-- A major feature is to add session persistence so trade history survives when server is restarted.
+- One more important feature is to add session persistence so trade history survives when server is restarted.
 
 - Possibly support for smaller screens even if full responsive design is not in plan.
 
@@ -679,14 +667,3 @@ Based on the planned weeks 9-12 and known outstanding items:
 7. DTI Project Final Report Template document structure. [file:27]
 
 ---
-
-# APPENDIX A: OPTIONAL TEAM FILL-INS
-
-Replace these before submission:
-
-- Team member names
-- Enrollment numbers
-- Mentor name
-- Submission month
-- Actual screenshots of UI
-- Faculty-approved formatting in Word/PDF export
