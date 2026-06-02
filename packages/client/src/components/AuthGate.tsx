@@ -3,8 +3,10 @@ import {
 	createUserWithEmailAndPassword,
 	signInWithEmailAndPassword,
 } from 'firebase/auth';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { auth } from '../firebase';
 import { useStore } from '../store';
+import { API_URL } from '../trpc';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,15 +26,35 @@ export function AuthGate() {
 	const [isSignUp, setIsSignUp] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!auth) return;
+		if (!auth) {
+			setError('Firebase is not configured');
+			return;
+		}
+		if (!turnstileToken) {
+			setError('Please complete the security check.');
+			return;
+		}
 
 		setLoading(true);
 		setError(null);
 
 		try {
+			// 1. Verify Turnstile token with our backend
+			const verifyRes = await fetch(`${API_URL}/api/verify-turnstile`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ token: turnstileToken }),
+			});
+			const verifyData = await verifyRes.json();
+			if (!verifyData.success) {
+				throw new Error(verifyData.error || 'Security check failed.');
+			}
+
+			// 2. Proceed with Firebase Auth
 			const cred = isSignUp
 				? await createUserWithEmailAndPassword(auth, email, password)
 				: await signInWithEmailAndPassword(auth, email, password);
@@ -41,6 +63,8 @@ export function AuthGate() {
 			setError(err.message?.replace('Firebase: ', '') || 'Auth failed');
 		} finally {
 			setLoading(false);
+			// Reset turnstile token if there was an error to force re-verification
+			if (error) setTurnstileToken(null);
 		}
 	};
 
@@ -55,9 +79,9 @@ export function AuthGate() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					{!auth && (
-						<Alert>
+						<Alert variant="destructive">
 							<AlertDescription>
-								Firebase not configured. Use mock login below.
+								Firebase is not configured. Please check your environment variables.
 							</AlertDescription>
 						</Alert>
 					)}
@@ -90,6 +114,14 @@ export function AuthGate() {
 							/>
 						</div>
 
+						<div className="space-y-1.5 flex justify-center py-2">
+							<Turnstile 
+								siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'} 
+								onSuccess={setTurnstileToken} 
+								options={{ theme: 'light' }}
+							/>
+						</div>
+
 						{error && (
 							<Alert variant="destructive">
 								<AlertDescription>{error}</AlertDescription>
@@ -98,7 +130,7 @@ export function AuthGate() {
 
 						<Button
 							type="submit"
-							disabled={loading || !auth}
+							disabled={loading || !auth || !turnstileToken}
 							className="w-full"
 						>
 							{loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
@@ -120,29 +152,6 @@ export function AuthGate() {
 					</Button>
 				</CardContent>
 			</Card>
-
-			<div className="absolute bottom-8 left-0 right-0 text-center">
-				<Button
-					type="button"
-					variant="link"
-					onClick={() => {
-						const randomId = Math.floor(Math.random() * 10000);
-						const uid = `mock-user-${randomId}`;
-						const mockUser: any = {
-							uid,
-							email: `user${randomId}@demo.local`,
-							emailVerified: true,
-							isAnonymous: false,
-							getIdToken: async () => uid,
-							toJSON: () => ({}),
-						};
-						setUser(mockUser);
-					}}
-					className="text-xs"
-				>
-					[DEV] Mock Login (Random User)
-				</Button>
-			</div>
 		</div>
 	);
 }

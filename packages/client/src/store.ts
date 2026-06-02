@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
 import type { Order, OrderBookSnapshot, Portfolio } from '@orderbook/shared';
 import type { User } from 'firebase/auth';
+import { API_URL } from './trpc';
 
 interface AppState {
 	// ── Auth ───────────────────────────────
@@ -46,7 +47,7 @@ export const useStore = create<AppState>((set, get) => ({
 	connectSocket: () => {
 		if (get().socket) return; // already connected
 
-		const socket = io('http://localhost:3001', {
+		const socket = io(API_URL, {
 			transports: ['websocket'],
 		});
 
