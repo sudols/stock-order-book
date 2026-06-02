@@ -24,14 +24,13 @@ if (hasCredentials) {
  * Throws on invalid / expired tokens.
  */
 export async function verifyFirebaseToken(token: string): Promise<string> {
-  // Allow mock tokens (for Market Maker bot or Dev mode)
-  if (token.startsWith('mock-')) {
-    return token;
+  // Allow Market Maker Bot
+  if (process.env.BOT_SECRET_KEY && token === process.env.BOT_SECRET_KEY) {
+    return 'mock-market-maker-bot';
   }
 
   if (!hasCredentials) {
-    // In mock mode, if not a 'mock-' token (already handled above), return a default mock user.
-    return 'mock-user-123';
+    throw new Error('Firebase credentials not configured');
   }
 
   try {

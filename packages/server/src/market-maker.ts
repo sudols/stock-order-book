@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 // Config
-const BOT_ID = 'mock-market-maker-bot';
+const BOT_SECRET_KEY = process.env.BOT_SECRET_KEY || 'mock-market-maker-bot';
 const SPREAD = 2; // $2 spread
 const BASE_PRICE = 90;
 const ORDER_SIZE_MIN = 1;
@@ -44,9 +44,12 @@ async function placeOrder(
 	try {
 		const response = await fetch(`${apiUrl}/placeOrder`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: { 
+				'Content-Type': 'application/json',
+				'x-bot-secret': BOT_SECRET_KEY
+			},
 			body: JSON.stringify({
-				token: BOT_ID,
+				token: BOT_SECRET_KEY,
 				side,
 				price,
 				quantity,
