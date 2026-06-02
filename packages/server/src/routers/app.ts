@@ -7,6 +7,7 @@ import type { MatchingEngine } from '../matching-engine.js';
 import type { PortfolioManager } from '../portfolio-manager.js';
 import type { OrderBook } from '../orderbook.js';
 import type { Server as SocketServer } from 'socket.io';
+import { marketMakerController } from '../market-maker.js';
 
 const t = initTRPC.create();
 
@@ -15,89 +16,103 @@ const t = initTRPC.create();
  * portfolio manager, order book, and Socket.io server.
  */
 export function createAppRouter(deps: {
-  matchingEngine: MatchingEngine;
-  portfolioManager: PortfolioManager;
-  orderBook: OrderBook;
-  io: SocketServer;
+	matchingEngine: MatchingEngine;
+	portfolioManager: PortfolioManager;
+	orderBook: OrderBook;
+	io: SocketServer;
 }) {
-  const { matchingEngine, portfolioManager, orderBook, io } = deps;
+	const { matchingEngine, portfolioManager, orderBook, io } = deps;
 
-  return t.router({
-    // ── Place Order ──────────────────────────────────────
-    placeOrder: t.procedure
-      .input(
-        z.object({
-          token: z.string(),
-          side: z.enum(['buy', 'sell']),
-          price: z.number(),
-          quantity: z.number(),
-        }),
-      )
-      .mutation(async ({ input }) => {
-        const userId = await verifyFirebaseToken(input.token);
+	return t.router({
+		// ── Place Order ──────────────────────────────────────
+		placeOrder: t.procedure
+			.input(
+				z.object({
+					token: z.string(),
+					side: z.enum(['buy', 'sell']),
+					price: z.number(),
+					quantity: z.number(),
+				}),
+			)
+			.mutation(async ({ input }) => {
+				const userId = await verifyFirebaseToken(input.token);
 
-        portfolioManager.initializeUser(userId);
+				portfolioManager.initializeUser(userId);
 
-        const order: Order = {
-          id: uuidv4(),
-          userId,
-          side: input.side,
-          price: input.price,
-          quantity: input.quantity,
-          timestamp: Date.now(),
-        };
+				const order: Order = {
+					id: uuidv4(),
+					userId,
+					side: input.side,
+					price: input.price,
+					quantity: input.quantity,
+					timestamp: Date.now(),
+				};
 
-        const result = matchingEngine.placeOrder(order);
+				const result = matchingEngine.placeOrder(order);
 
-        io.emit('orderbook', {
-          bids: orderBook.getTop10Bids(),
-          asks: orderBook.getTop10Asks(),
-          timestamp: Date.now(),
-        });
+				io.emit('orderbook', {
+					bids: orderBook.getTop10Bids(),
+					asks: orderBook.getTop10Asks(),
+					timestamp: Date.now(),
+				});
 
-        return result;
-      }),
+				return result;
+			}),
 
-    // ── Cancel Order ─────────────────────────────────────
-    cancelOrder: t.procedure
-      .input(
-        z.object({
-          token: z.string(),
-          orderId: z.string(),
-        }),
-      )
-      .mutation(async ({ input }) => {
-        const userId = await verifyFirebaseToken(input.token);
-        const result = matchingEngine.cancelOrder(input.orderId, userId);
+		// ── Cancel Order ─────────────────────────────────────
+		cancelOrder: t.procedure
+			.input(
+				z.object({
+					token: z.string(),
+					orderId: z.string(),
+				}),
+			)
+			.mutation(async ({ input }) => {
+				const userId = await verifyFirebaseToken(input.token);
+				const result = matchingEngine.cancelOrder(input.orderId, userId);
 
-        // Broadcast updated book
-        io.emit('orderbook', {
-          bids: orderBook.getTop10Bids(),
-          asks: orderBook.getTop10Asks(),
-          timestamp: Date.now(),
-        });
+				// Broadcast updated book
+				io.emit('orderbook', {
+					bids: orderBook.getTop10Bids(),
+					asks: orderBook.getTop10Asks(),
+					timestamp: Date.now(),
+				});
 
-        return result;
-      }),
+				return result;
+			}),
 
-    // ── Get Portfolio ────────────────────────────────────
-    getPortfolio: t.procedure
-      .input(z.object({ token: z.string() }))
-      .query(async ({ input }) => {
-        const userId = await verifyFirebaseToken(input.token);
-        const portfolio = portfolioManager.initializeUser(userId);
-        return portfolio;
-      }),
+		// ── Get Portfolio ────────────────────────────────────
+		getPortfolio: t.procedure
+			.input(z.object({ token: z.string() }))
+			.query(async ({ input }) => {
+				const userId = await verifyFirebaseToken(input.token);
+				const portfolio = portfolioManager.initializeUser(userId);
+				return portfolio;
+			}),
 
-    // ── Get OrderBook Snapshot ────────────────────────────
-    getOrderBook: t.procedure.query(() => {
-      return {
-        bids: orderBook.getTop10Bids(),
-        asks: orderBook.getTop10Asks(),
-        timestamp: Date.now(),
-      };
-    }),
-  });
+		// ── Get OrderBook Snapshot ────────────────────────────
+		getOrderBook: t.procedure.query(() => {
+			return {
+				bids: orderBook.getTop10Bids(),
+				asks: orderBook.getTop10Asks(),
+				timestamp: Date.now(),
+			};
+		}),
+
+		// ── Extend Market Maker ──────────────────────────────
+		extendMarketMaker: t.procedure
+			.input(
+				z.object({
+					token: z.string(),
+					durationMs: z.number(),
+				}),
+			)
+			.mutation(async ({ input }) => {
+				await verifyFirebaseToken(input.token);
+				marketMakerController.extend(input.durationMs);
+				return { success: true };
+			}),
+	});
 }
 
 export type AppRouter = ReturnType<typeof createAppRouter>;

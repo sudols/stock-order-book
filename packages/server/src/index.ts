@@ -8,6 +8,7 @@ import { OrderBook } from './orderbook.js';
 import { PortfolioManager } from './portfolio-manager.js';
 import { MatchingEngine } from './matching-engine.js';
 import { createAppRouter } from './routers/app.js';
+import { startMarketMaker } from './market-maker.js';
 
 const PORT = Number(process.env.PORT) || 3001;
 
@@ -65,4 +66,10 @@ server.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
   console.log(`   tRPC  → http://localhost:${PORT}/trpc`);
   console.log(`   WS    → ws://localhost:${PORT}`);
+
+  setTimeout(() => {
+    startMarketMaker(`http://localhost:${PORT}/trpc`).catch((err) => {
+      console.error('Failed to start inline market maker:', err);
+    });
+  }, 1000);
 });
