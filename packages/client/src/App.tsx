@@ -42,6 +42,9 @@ export default function App() {
 				const token = await user.getIdToken();
 				const p = await trpc.getPortfolio.query({ token });
 				setPortfolio(p);
+				
+				// Automatically trigger MarketMaker for 3 minutes on login
+				await trpc.extendMarketMaker.mutate({ token, durationMs: 3 * 60 * 1000 });
 			} catch {
 				// ignore transient fetch failures
 			}
@@ -55,7 +58,9 @@ export default function App() {
 			<header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				<div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
 					<div className="flex items-center gap-3">
-						<h1 className="text-base font-semibold tracking-tight">Order Book</h1>
+						<h1 className="text-base font-semibold tracking-tight">
+							Order Book
+						</h1>
 						<Badge variant="secondary" className="gap-1">
 							<span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
 							LIVE
@@ -65,6 +70,21 @@ export default function App() {
 						<span className="hidden text-sm text-muted-foreground sm:inline">
 							{user.email ?? user.uid}
 						</span>
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={async () => {
+								if (!user) return;
+								try {
+									const token = await user.getIdToken();
+									await trpc.extendMarketMaker.mutate({ token, durationMs: 90 * 1000 });
+								} catch (e) {
+									console.error('Failed to trigger market maker', e);
+								}
+							}}
+						>
+							Trigger MarketMaker
+						</Button>
 						<Button
 							variant="outline"
 							size="sm"

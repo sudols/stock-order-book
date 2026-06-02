@@ -96,7 +96,11 @@ export function AuthGate() {
 							</Alert>
 						)}
 
-						<Button type="submit" disabled={loading || !auth} className="w-full">
+						<Button
+							type="submit"
+							disabled={loading || !auth}
+							className="w-full"
+						>
 							{loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
 						</Button>
 					</form>
