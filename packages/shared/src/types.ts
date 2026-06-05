@@ -40,6 +40,13 @@ export interface OrderBookSnapshot {
   timestamp: number;
 }
 
+// ─── OrderBook Update (sent to clients on every change) ──────
+export interface OrderBookUpdate {
+  bids: Order[];
+  asks: Order[];
+  timestamp: number;
+}
+
 // ─── Result type for error handling ──────────────────────
 export type Result<T, E = string> =
   | { success: T; error?: never }

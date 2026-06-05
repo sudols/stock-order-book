@@ -12,6 +12,8 @@ import type { PortfolioManager } from './portfolio-manager.js';
 export class MatchingEngine {
 	public priceHistory: PriceHistoryItem[] = [];
 	private lastPushTimestamp = 0;
+	public onPriceHistoryPush?: (item: PriceHistoryItem) => void;
+	public onPriceHistorySnapshot?: (history: PriceHistoryItem[]) => void;
 
 	constructor(
 		private orderBook: OrderBook,
@@ -27,10 +29,16 @@ export class MatchingEngine {
 		});
 
 		if (this.priceHistory.length === 0 || now - this.lastPushTimestamp >= 500) {
-			this.priceHistory.push({ time: timeStr, price });
+			const newItem = { time: timeStr, price };
+			this.priceHistory.push(newItem);
 			this.lastPushTimestamp = now;
-		} else {
-			this.priceHistory[this.priceHistory.length - 1].price = price;
+
+			if (this.priceHistory.length >= 600) {
+				this.priceHistory = this.priceHistory.filter((_, idx) => idx % 2 === 0);
+				this.onPriceHistorySnapshot?.(this.priceHistory);
+			} else {
+				this.onPriceHistoryPush?.(newItem);
+			}
 		}
 	}
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
-import type { Order, OrderBookSnapshot, Portfolio, PriceHistoryItem } from '@orderbook/shared';
+import type { Order, OrderBookSnapshot, OrderBookUpdate, Portfolio, PriceHistoryItem } from '@orderbook/shared';
 import type { User } from 'firebase/auth';
 import { API_URL } from './trpc';
 
@@ -53,13 +53,31 @@ export const useStore = create<AppState>((set, get) => ({
 			transports: ['websocket'],
 		});
 
-		socket.on('orderbook', (snapshot: OrderBookSnapshot) => {
+		socket.on('orderbookSnapshot', (snapshot: OrderBookSnapshot) => {
 			set({
 				bids: snapshot.bids,
 				asks: snapshot.asks,
 				priceHistory: snapshot.priceHistory || [],
 				lastUpdate: snapshot.timestamp,
 			});
+		});
+
+		socket.on('orderbookUpdate', (update: OrderBookUpdate) => {
+			set({
+				bids: update.bids,
+				asks: update.asks,
+				lastUpdate: update.timestamp,
+			});
+		});
+
+		socket.on('priceHistoryDelta', (item: PriceHistoryItem) => {
+			set((state) => ({
+				priceHistory: [...state.priceHistory, item],
+			}));
+		});
+
+		socket.on('priceHistorySnapshotSync', (compressedHistory: PriceHistoryItem[]) => {
+			set({ priceHistory: compressedHistory });
 		});
 
 		socket.on('connect', () => {

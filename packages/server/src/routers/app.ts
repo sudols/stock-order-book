@@ -50,10 +50,9 @@ export function createAppRouter(deps: {
 
 				const result = matchingEngine.placeOrder(order);
 
-				io.emit('orderbook', {
+				io.emit('orderbookUpdate', {
 					bids: orderBook.getTop10Bids(),
 					asks: orderBook.getTop10Asks(),
-					priceHistory: matchingEngine.priceHistory,
 					timestamp: Date.now(),
 				});
 
@@ -73,10 +72,9 @@ export function createAppRouter(deps: {
 				const result = matchingEngine.cancelOrder(input.orderId, userId);
 
 				// Broadcast updated book
-				io.emit('orderbook', {
+				io.emit('orderbookUpdate', {
 					bids: orderBook.getTop10Bids(),
 					asks: orderBook.getTop10Asks(),
-					priceHistory: matchingEngine.priceHistory,
 					timestamp: Date.now(),
 				});
 

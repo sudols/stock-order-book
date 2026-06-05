@@ -54,11 +54,21 @@ const io = new SocketServer(server, {
   cors: { origin: '*' },
 });
 
+// Broadcast price history updates to all clients when recorded
+matchingEngine.onPriceHistoryPush = (item) => {
+  io.emit('priceHistoryDelta', item);
+};
+
+// Broadcast full compressed array when a compression threshold is hit
+matchingEngine.onPriceHistorySnapshot = (compressedHistory) => {
+  io.emit('priceHistorySnapshotSync', compressedHistory);
+};
+
 io.on('connection', (socket) => {
   console.log(`[ws] client connected: ${socket.id}`);
 
   // Send current orderbook snapshot on connect
-  socket.emit('orderbook', {
+  socket.emit('orderbookSnapshot', {
     bids: orderBook.getTop10Bids(),
     asks: orderBook.getTop10Asks(),
     priceHistory: matchingEngine.priceHistory,
