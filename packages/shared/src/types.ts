@@ -26,10 +26,17 @@ export interface Portfolio {
   stocks: number;
 }
 
+// ─── Price History ───────────────────────────────────────
+export interface PriceHistoryItem {
+  time: string;
+  price: number;
+}
+
 // ─── OrderBook Snapshot (sent to clients) ────────────────
 export interface OrderBookSnapshot {
   bids: Order[];
   asks: Order[];
+  priceHistory: PriceHistoryItem[];
   timestamp: number;
 }
 

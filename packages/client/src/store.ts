@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
-import type { Order, OrderBookSnapshot, Portfolio } from '@orderbook/shared';
+import type { Order, OrderBookSnapshot, Portfolio, PriceHistoryItem } from '@orderbook/shared';
 import type { User } from 'firebase/auth';
 import { API_URL } from './trpc';
 
@@ -12,6 +12,7 @@ interface AppState {
 	// ── Order Book ─────────────────────────
 	bids: Order[];
 	asks: Order[];
+	priceHistory: PriceHistoryItem[];
 	lastUpdate: number;
 
 	// ── Portfolio ──────────────────────────
@@ -36,6 +37,7 @@ export const useStore = create<AppState>((set, get) => ({
 	// Order Book
 	bids: [],
 	asks: [],
+	priceHistory: [],
 	lastUpdate: 0,
 
 	// Portfolio
@@ -55,6 +57,7 @@ export const useStore = create<AppState>((set, get) => ({
 			set({
 				bids: snapshot.bids,
 				asks: snapshot.asks,
+				priceHistory: snapshot.priceHistory || [],
 				lastUpdate: snapshot.timestamp,
 			});
 		});

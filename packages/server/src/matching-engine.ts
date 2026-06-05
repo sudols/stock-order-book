@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { Order, Trade, Result } from '@orderbook/shared';
+import type { Order, Trade, Result, PriceHistoryItem } from '@orderbook/shared';
 import type { OrderBook } from './orderbook.js';
 import type { PortfolioManager } from './portfolio-manager.js';
 
@@ -10,10 +10,29 @@ import type { PortfolioManager } from './portfolio-manager.js';
  * and delegates balance updates to the PortfolioManager.
  */
 export class MatchingEngine {
+	public priceHistory: PriceHistoryItem[] = [];
+	private lastPushTimestamp = 0;
+
 	constructor(
 		private orderBook: OrderBook,
 		private portfolioManager: PortfolioManager,
 	) {}
+
+	private recordTradePrice(price: number) {
+		const now = Date.now();
+		const timeStr = new Date(now).toLocaleTimeString([], {
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+		});
+
+		if (this.priceHistory.length === 0 || now - this.lastPushTimestamp >= 500) {
+			this.priceHistory.push({ time: timeStr, price });
+			this.lastPushTimestamp = now;
+		} else {
+			this.priceHistory[this.priceHistory.length - 1].price = price;
+		}
+	}
 
 	/**
 	 * Validate & match an incoming order against the book.
@@ -83,6 +102,7 @@ export class MatchingEngine {
 			}
 
 			this.portfolioManager.executeTrade(trade);
+			this.recordTradePrice(trade.price);
 		}
 
 		// Remaining quantity rests on the book

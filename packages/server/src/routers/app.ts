@@ -53,6 +53,7 @@ export function createAppRouter(deps: {
 				io.emit('orderbook', {
 					bids: orderBook.getTop10Bids(),
 					asks: orderBook.getTop10Asks(),
+					priceHistory: matchingEngine.priceHistory,
 					timestamp: Date.now(),
 				});
 
@@ -75,6 +76,7 @@ export function createAppRouter(deps: {
 				io.emit('orderbook', {
 					bids: orderBook.getTop10Bids(),
 					asks: orderBook.getTop10Asks(),
+					priceHistory: matchingEngine.priceHistory,
 					timestamp: Date.now(),
 				});
 

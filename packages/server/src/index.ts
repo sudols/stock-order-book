@@ -61,6 +61,7 @@ io.on('connection', (socket) => {
   socket.emit('orderbook', {
     bids: orderBook.getTop10Bids(),
     asks: orderBook.getTop10Asks(),
+    priceHistory: matchingEngine.priceHistory,
     timestamp: Date.now(),
   });
 

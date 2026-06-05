@@ -3,6 +3,7 @@ import type { Order } from '@orderbook/shared';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { PriceChart } from './PriceChart';
 
 export function OrderBookView() {
 	const bids = useStore((s) => s.bids);
@@ -22,6 +23,8 @@ export function OrderBookView() {
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-3">
+				<PriceChart />
+
 				<div className="grid grid-cols-3 gap-2 px-2 text-xs font-medium text-muted-foreground">
 					<span>Price ($)</span>
 					<span className="text-center">Qty</span>
