@@ -2,7 +2,7 @@
 
 A real-time stock order book application demonstrating high-performance order matching with both TypeScript and Go implementations.
 
-## 🚀 Features
+## Features
 
 - **Dual Engine Support**: Choose between TypeScript or Go matching engine
 - **Real-time Updates**: WebSocket-based order book synchronization
@@ -11,7 +11,7 @@ A real-time stock order book application demonstrating high-performance order ma
 - **Portfolio Management**: Track user balances and prevent invalid trades
 - **Firebase Authentication**: Secure user authentication
 
-## 📦 Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────┐
@@ -35,7 +35,7 @@ A real-time stock order book application demonstrating high-performance order ma
 └─────────────────────────────────────┘
 ```
 
-## 🏃 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -86,7 +86,7 @@ cd packages/client
 pnpm dev
 ```
 
-## 📊 Performance Benchmarks
+## Performance Benchmarks
 
 ### Compare All Implementations
 
@@ -133,7 +133,7 @@ tsx benchmark.ts
 - **TS Optimized**: Advanced data structures, best for specific workloads
 - **Go Benefits**: Better concurrency, lower memory, type safety
 
-## 🧪 Testing
+## Testing
 
 ### Manual API Testing
 
@@ -209,7 +209,7 @@ pnpm test
 └── package.json             # Root workspace config
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -229,14 +229,14 @@ FIREBASE_CLIENT_EMAIL=your-client-email
 FIREBASE_PRIVATE_KEY=your-private-key
 ```
 
-## 📚 Documentation
+## Documentation
 
 - [Go Integration Guide](docs/go-integration.md) - Detailed integration documentation
 - [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Complete implementation overview
 - [Order Matching System](docs/order-matching-system.md) - Algorithm explanation
 - [Technical Architecture](docs/technical-architecture.md) - System design
 
-## 🎯 Key Features Explained
+## Key Features Explained
 
 ### OrderBook Data Structure
 
@@ -257,7 +257,7 @@ FIREBASE_PRIVATE_KEY=your-private-key
 - **Localhost**: No network overhead, ~50-100 µs latency
 - **Async**: Non-blocking communication with async/await
 
-## 🚧 Troubleshooting
+## Troubleshooting
 
 ### Go service won't start
 ```bash
@@ -290,15 +290,15 @@ USE_GO_ENGINE=true pnpm dev
 - Ensure not running in debug mode
 - Check system resources (CPU, memory)
 
-## 🤝 Contributing
+## Contributing
 
 This is an academic project demonstrating multi-language integration and performance optimization.
 
-## 📄 License
+## License
 
 MIT
 
-## 🎓 Academic Context
+## Academic Context
 
 This project demonstrates:
 - Multi-language system integration
