@@ -9,3 +9,7 @@ dist/
 # Firebase Admin SDK credentials
 stockbook-*-firebase-adminsdk.json
 *-adminsdk.json
+
+# Profiler & Editor
+*.heapsnapshot
+.vscode/
