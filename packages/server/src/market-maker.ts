@@ -6,7 +6,7 @@ const SPREAD = 2; // $2 spread
 const BASE_PRICE = 90;
 const ORDER_SIZE_MIN = 1;
 const ORDER_SIZE_MAX = 5;
-const INTERVAL_MS = 200; // New orders every 200ms
+const INTERVAL_MS = 500; // New orders every 200ms
 
 // Utils
 const randomInt = (min: number, max: number) =>
@@ -44,9 +44,9 @@ async function placeOrder(
 	try {
 		const response = await fetch(`${apiUrl}/placeOrder`, {
 			method: 'POST',
-			headers: { 
+			headers: {
 				'Content-Type': 'application/json',
-				'x-bot-secret': BOT_SECRET_KEY
+				'x-bot-secret': BOT_SECRET_KEY,
 			},
 			body: JSON.stringify({
 				token: BOT_SECRET_KEY,

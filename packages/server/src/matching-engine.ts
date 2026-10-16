@@ -33,9 +33,10 @@ export class MatchingEngine {
 			this.priceHistory.push(newItem);
 			this.lastPushTimestamp = now;
 
-			if (this.priceHistory.length >= 600) {
+			if (this.priceHistory.length >= 400) {
 				this.priceHistory = this.priceHistory.filter((_, idx) => idx % 2 === 0);
 				this.onPriceHistorySnapshot?.(this.priceHistory);
+				console.log('Compression snapshot pushed');
 			} else {
 				this.onPriceHistoryPush?.(newItem);
 			}

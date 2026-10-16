@@ -15,6 +15,8 @@ const t = initTRPC.create();
  * Factory — creates the tRPC router with access to the engine,
  * portfolio manager, order book, and Socket.io server.
  */
+const ORDERBOOK_EMIT_INTERVAL_MS = 500;
+
 export function createAppRouter(deps: {
 	matchingEngine: MatchingEngine;
 	portfolioManager: PortfolioManager;
@@ -22,6 +24,21 @@ export function createAppRouter(deps: {
 	io: SocketServer;
 }) {
 	const { matchingEngine, portfolioManager, orderBook, io } = deps;
+
+	let orderbookDirty = false;
+	setInterval(() => {
+		if (!orderbookDirty) return;
+		orderbookDirty = false;
+		io.emit('orderbookUpdate', {
+			bids: orderBook.getTop10Bids(),
+			asks: orderBook.getTop10Asks(),
+			timestamp: Date.now(),
+		});
+	}, ORDERBOOK_EMIT_INTERVAL_MS);
+
+	function markOrderbookDirty() {
+		orderbookDirty = true;
+	}
 
 	return t.router({
 		// ── Place Order ──────────────────────────────────────
@@ -50,11 +67,7 @@ export function createAppRouter(deps: {
 
 				const result = matchingEngine.placeOrder(order);
 
-				io.emit('orderbookUpdate', {
-					bids: orderBook.getTop10Bids(),
-					asks: orderBook.getTop10Asks(),
-					timestamp: Date.now(),
-				});
+				markOrderbookDirty();
 
 				return result;
 			}),
@@ -71,12 +84,7 @@ export function createAppRouter(deps: {
 				const userId = await verifyFirebaseToken(input.token);
 				const result = matchingEngine.cancelOrder(input.orderId, userId);
 
-				// Broadcast updated book
-				io.emit('orderbookUpdate', {
-					bids: orderBook.getTop10Bids(),
-					asks: orderBook.getTop10Asks(),
-					timestamp: Date.now(),
-				});
+				markOrderbookDirty();
 
 				return result;
 			}),

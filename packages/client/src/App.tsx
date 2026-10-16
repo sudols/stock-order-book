@@ -125,6 +125,7 @@ export default function App() {
 					<TradeForm />
 				</div>
 			</main>
+
 		</div>
 	);
 }
