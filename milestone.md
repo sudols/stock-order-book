@@ -1,6 +1,7 @@
 # Glass-Box: Interactive Multi-Symbol Market Microstructure & ACID Transaction Simulator with Agentic AI
 
 ### Milestone-1: Project Proposal, Requirements & Feasibility
+
 - **Course & Context:** Major Project / Capstone Specification (Milestone 1)
 - **Institution:** School of Computer Science Engineering & Technology (SCSET), Bennett University
 - **Academic Program:** Bachelor of Computer Applications (BCA)
@@ -32,7 +33,7 @@
 
 Most retail trading simulators like TradingView paper trading or Moneybhai let people submit simulated buy and sell orders, but they conceal the internal mechanics of the exchange. Users cannot inspect order queue priority, examine counterparty allocation, observe order book depth changes, or see why aggressive market orders incur severe price slippage when liquidity thins out. The exchange operates as an opaque black box returning only a single aggregated confirmation price.
 
-Simultaneously, computer science curricula typically introduce database concurrency control and ACID transactions through simplistic toy scenarios—such as a single balance transfer from Account A to Account B. This fails to expose students to high-contention enterprise database dynamics, where concurrent multi-party order sweeps contend for the same row locks, multi-account settlements must commit atomically across $k+1$ portfolios, and in-memory matching speeds directly conflict with disk write latency.
+Simultaneously, computer science curricula typically introduce database concurrency control and ACID transactions through simplistic toy scenarios such as a single balance transfer from Account A to Account B. This fails to expose students to high-contention enterprise database dynamics, where concurrent multi-party order sweeps contend for the same row locks, multi-account settlements must commit atomically across $k+1$ portfolios, and in-memory matching speeds directly conflict with disk write latency.
 
 Because of this dual educational disconnect, **Glass-Box** is proposed as an open-source, web-native educational electronic exchange, market microstructure simulator, and database concurrency laboratory. It exposes continuous double auction internals, displays row-level lock contention in PostgreSQL, and integrates an agentic AI tutor to provide mathematically grounded explanations of live market dynamics.
 
@@ -57,7 +58,7 @@ There are already several types of tools available, though each category leaves 
    Systems like ABIDES or PyLOB simulate limit order books in detail, often with automated trading agents written for research papers. They are usually command-line tools written in Python or C++, often configured for US market settings, and setting them up takes work since they do not come with web interfaces or links to database learning. They work well for machine learning experiments, but are hard for beginners to inspect.
 
 3. Institutional and classroom trading simulators:
-   Platforms like Stevens SHIFT (Stevens High Frequency Trading Simulation System), FTS Interactive Markets, and Rotman Interactive Trader (RIT) simulate electronic exchanges for university finance courses and trading competitions. However, these tools are built strictly from an external *market participant's* viewpoint—students send orders to a closed binary via client tickets or FIX APIs without access to the matching engine's internal queues or database transactions. In addition, they are proprietary, expensive to license, US-centric, and run as legacy desktop software rather than open-source, web-native systems.
+   Platforms like Stevens SHIFT (Stevens High Frequency Trading Simulation System), FTS Interactive Markets, and Rotman Interactive Trader (RIT) simulate electronic exchanges for university finance courses and trading competitions. However, these tools are built strictly from an external _market participant's_ viewpoint students send orders to a closed binary via client tickets or FIX APIs without access to the matching engine's internal queues or database transactions. In addition, they are proprietary, expensive to license, US-centric, and run as legacy desktop software rather than open-source, web-native systems.
 
 ---
 
@@ -272,7 +273,7 @@ The project scope is structured into six hierarchical work packages (WBS 1.0 to 
   - 1.2 System specification, non-functional latency/throughput budgets, and SDG alignment
   - 1.3 Ethics, regulatory boundary definition (SEBI circulars), and sandbox disclaimer drafting
 
-- **2.0 High-Performance In-Memory Matching Core (Go)**
+- **2.0 High-Performance In-Memory Matching Core**
   - 2.1 Order object modeling (limit, market, cancellation) and multi-symbol state routing
   - 2.2 Doubly-linked list + hash map FIFO price-time priority order book implementation
   - 2.3 Synthetic burst generation harness and microsecond-level matching benchmark suite
@@ -338,8 +339,7 @@ Educational targets:
 
 #### 17. References
 
-1. Kyle, A. S. (1985). Continuous auctions and informed trader. Econometrica, 53(6), 1315-1335.
-2. Glosten, L. R., and Milgrom, P. R. (1985). Bid, ask and transaction prices in a specialist market with heterogeneously informed traders. Journal of Financial Economics, 14(1), 71-100.
-3. Securities and Exchange Board of India. (2023). Master circular for stock exchanges and clearing corporations.
-4. Kleppmann, M. (2017). Designing data-intensive applications: the big ideas behind reliable, scalable, and maintainable systems. O'Reilly Media.
-5. Harris, L. (2003). Trading and exchanges: market microstructure for practitioners. Oxford University Press.
+1. Glosten, L. R., and Milgrom, P. R. (1985). Bid, ask and transaction prices in a specialist market with heterogeneously informed traders. Journal of Financial Economics, 14(1), 71-100.
+2. Securities and Exchange Board of India. (2023). Master circular for stock exchanges and clearing corporations.
+3. Kleppmann, M. (2017). Designing data-intensive applications: the big ideas behind reliable, scalable, and maintainable systems. O'Reilly Media.
+4. Harris, L. (2003). Trading and exchanges: market microstructure for practitioners. Oxford University Press.
