@@ -49,34 +49,34 @@ S2-01 [Postgres Docker] (✅) ──► S2-02 [3NF Schema] ──► S2-03 [Doub
 
 ---
 
-### Feature Card: `S2-02` — 3NF Relational Schema & Migrations
-- **Status:** `[ ] PENDING`
+### Feature Card: `[x]` `S2-02` — 3NF Relational Schema & Migrations
+- **Status:** `[x] COMPLETED`
 - **Owner:** Sameer Bhati (`S24BCAU0106`)
 - **Target Branch:** `feat/S2-02-postgres-schema`
 - **Prerequisites:** `S2-01`
 - **Scope & Implementation Details:**
-  1. Set up Drizzle ORM (recommended for type-safe, sub-millisecond query performance) in `packages/server`:
-     - Install: `drizzle-orm`, `postgres` (or `pg`), and `drizzle-kit` (dev).
-     - Add `packages/server/src/db/index.ts` (connection client) and `packages/server/src/db/schema.ts`.
-  2. Implement the 8 core tables as specified in `capstone.md`:
-     - **`users`:** `user_id` (UUID PK), `username` (VARCHAR UNIQUE), `email` (VARCHAR UNIQUE), `role` (`STUDENT` | `INSTRUCTOR` | `AUDITOR`), `created_at`.
-     - **`portfolios`:** `portfolio_id` (UUID PK), `user_id` (UUID FK → users), `cash_balance` (NUMERIC(15,2)), `locked_cash` (NUMERIC(15,2)), `updated_at`.
+  - [x] 1. Set up Drizzle ORM (recommended for type-safe, sub-millisecond query performance) in `packages/server`:
+     - [x] Install: `drizzle-orm`, `postgres`, and `drizzle-kit` (dev).
+     - [x] Add `packages/server/src/db/index.ts` (connection client) and `packages/server/src/db/schema.ts`.
+  - [x] 2. Implement the 8 core tables as specified in `capstone.md`:
+     - [x] **`users`:** `user_id` (UUID PK), `username` (VARCHAR UNIQUE), `email` (VARCHAR UNIQUE), `role` (`STUDENT` | `INSTRUCTOR` | `AUDITOR`), `created_at`.
+     - [x] **`portfolios`:** `portfolio_id` (UUID PK), `user_id` (UUID FK → users), `cash_balance` (NUMERIC(15,2)), `locked_cash` (NUMERIC(15,2)), `updated_at`.
        - *Constraint:* `CHECK (cash_balance >= 0)`, `CHECK (locked_cash >= 0)`.
-     - **`securities_holdings`:** `holding_id` (UUID PK), `user_id` (UUID FK → users), `symbol_id` (VARCHAR(10) FK → symbols), `quantity` (INT), `locked_quantity` (INT), `updated_at`.
+     - [x] **`securities_holdings`:** `holding_id` (UUID PK), `user_id` (UUID FK → users), `symbol_id` (VARCHAR(10) FK → symbols), `quantity` (INT), `locked_quantity` (INT), `updated_at`.
        - *Constraint:* `CHECK (quantity >= 0)`, `CHECK (locked_quantity >= 0)`, `UNIQUE (user_id, symbol_id)`.
-     - **`symbols`:** `symbol_id` (VARCHAR(10) PK), `company_name` (VARCHAR), `tick_size` (NUMERIC(6,2) DEFAULT 0.05), `lot_size` (INT DEFAULT 1), `base_price` (NUMERIC(12,2)), `circuit_limit_pct` (NUMERIC(4,2) DEFAULT 10.00), `is_halted` (BOOLEAN DEFAULT false).
-     - **`orders`:** `order_id` (UUID PK), `user_id` (UUID FK), `symbol_id` (VARCHAR(10) FK), `side` (`BUY` | `SELL`), `order_type` (`LIMIT` | `MARKET`), `price` (NUMERIC(12,2)), `initial_quantity` (INT), `remaining_quantity` (INT), `status` (`PENDING` | `RESTING` | `PARTIALLY_FILLED` | `FILLED` | `CANCELLED`), `placed_at` (TIMESTAMPTZ).
-     - **`trades`:** `trade_id` (UUID PK), `buy_order_id` (UUID FK), `sell_order_id` (UUID FK), `buyer_id` (UUID FK), `seller_id` (UUID FK), `symbol_id` (VARCHAR(10) FK), `price` (NUMERIC(12,2)), `quantity` (INT), `taker_side` (`BUY` | `SELL`), `executed_at` (TIMESTAMPTZ).
-     - **`ledger_entries`:** `entry_id` (BIGSERIAL PK), `transaction_id` (UUID), `account_id` (UUID), `account_type` (`CASH` | `SECURITIES`), `symbol_id` (VARCHAR(10) NULL), `debit` (NUMERIC(15,2)), `credit` (NUMERIC(15,2)), `description` (TEXT), `created_at` (TIMESTAMPTZ).
-     - **`market_events_wal`:** `event_id` (BIGSERIAL PK), `symbol_id` (VARCHAR(10) FK), `event_type` (`ORDER_PLACED` | `MATCH` | `CANCEL`), `payload` (JSONB), `sequence_no` (BIGINT UNIQUE), `created_at` (TIMESTAMPTZ).
-  3. Create automated migration script (`pnpm --filter @orderbook/server db:migrate`) and seed script (`db:seed`) for initial symbols (`TCS`, `INFY`, `RELIANCE`, `HDFCBANK`) and initial demo users.
+     - [x] **`symbols`:** `symbol_id` (VARCHAR(10) PK), `company_name` (VARCHAR), `tick_size` (NUMERIC(6,2) DEFAULT 0.05), `lot_size` (INT DEFAULT 1), `base_price` (NUMERIC(12,2)), `circuit_limit_pct` (NUMERIC(4,2) DEFAULT 10.00), `is_halted` (BOOLEAN DEFAULT false).
+     - [x] **`orders`:** `order_id` (UUID PK), `user_id` (UUID FK), `symbol_id` (VARCHAR(10) FK), `side` (`BUY` | `SELL`), `order_type` (`LIMIT` | `MARKET`), `price` (NUMERIC(12,2)), `initial_quantity` (INT), `remaining_quantity` (INT), `status` (`PENDING` | `RESTING` | `PARTIALLY_FILLED` | `FILLED` | `CANCELLED`), `placed_at` (TIMESTAMPTZ).
+     - [x] **`trades`:** `trade_id` (UUID PK), `buy_order_id` (UUID FK), `sell_order_id` (UUID FK), `buyer_id` (UUID FK), `seller_id` (UUID FK), `symbol_id` (VARCHAR(10) FK), `price` (NUMERIC(12,2)), `quantity` (INT), `taker_side` (`BUY` | `SELL`), `executed_at` (TIMESTAMPTZ).
+     - [x] **`ledger_entries`:** `entry_id` (BIGSERIAL PK), `transaction_id` (UUID), `account_id` (UUID), `account_type` (`CASH` | `SECURITIES`), `symbol_id` (VARCHAR(10) NULL), `debit` (NUMERIC(15,2)), `credit` (NUMERIC(15,2)), `description` (TEXT), `created_at` (TIMESTAMPTZ).
+     - [x] **`market_events_wal`:** `event_id` (BIGSERIAL PK), `symbol_id` (VARCHAR(10) FK), `event_type` (`ORDER_PLACED` | `MATCH` | `CANCEL`), `payload` (JSONB), `sequence_no` (BIGINT UNIQUE), `created_at` (TIMESTAMPTZ).
+  - [x] 3. Create automated migration script (`pnpm --filter @orderbook/server db:migrate`) and seed script (`db:seed`) for initial symbols (`TCS`, `INFY`, `RELIANCE`, `HDFCBANK`) and initial demo users.
 - **Files Involved:**
-  - Create: `packages/server/src/db/index.ts`, `packages/server/src/db/schema.ts`, `packages/server/src/db/seed.ts`, `drizzle.config.ts`
-  - Modify: `packages/server/package.json`
+  - [x] Created: `packages/server/src/db/index.ts`, `packages/server/src/db/schema.ts`, `packages/server/src/db/seed.ts`, `packages/server/src/db/migrate.ts`, `packages/server/src/db/schema.test.ts`, `packages/server/drizzle.config.ts`, `drizzle.config.ts`
+  - [x] Modified: `packages/server/package.json`
 - **Acceptance Criteria (Definition of Done):**
-  - [ ] Migration creates all 8 tables with proper foreign keys, UUID defaults, and `CHECK` constraints.
-  - [ ] Inserting a negative `cash_balance` or negative `quantity` throws a database constraint violation error.
-  - [ ] Seed script executes and populates the 4 Indian equities and test users with ₹10,000 cash and 100 shares.
+  - [x] Migration creates all 8 tables with proper foreign keys, UUID defaults, and `CHECK` constraints.
+  - [x] Inserting a negative `cash_balance` or negative `quantity` throws a database constraint violation error.
+  - [x] Seed script executes and populates the 4 Indian equities and test users with ₹10,000 cash and 100 shares.
 
 ---
 
