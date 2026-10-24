@@ -45,7 +45,7 @@ Sprint 4 (Weeks 10-12) ──► WAL Crash Recovery, Time-Travel Replay & Teleme
 
 | Feature ID | Feature Name | Assignee | Target Branch | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| `S2-01` | Local PostgreSQL 16 Infrastructure & Docker Compose | Sameer / Apoorva | `feat/S2-01-postgres-docker` | `[ ]` |
+| `S2-01` | Local PostgreSQL 16 Infrastructure & Docker Compose | Sameer / Apoorva | `feat/S2-01-postgres-docker` | `[x]` |
 | `S2-02` | 3NF Relational Schema & Migrations (8 Core Tables) | Sameer Bhati | `feat/S2-02-postgres-schema` | `[ ]` |
 | `S2-03` | Double-Entry Financial Ledger & Trigger Invariants (`NR-05`) | Sameer Bhati | `feat/S2-03-double-entry-ledger` | `[ ]` |
 | `S2-04` | Multi-Symbol Order Books & Market Parameters (`FR-04`) | Apoorva Pandey | `feat/S2-04-multi-symbol-books` | `[ ]` |

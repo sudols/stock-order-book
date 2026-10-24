@@ -19,7 +19,7 @@ S2-01 [Postgres Docker] ──► S2-02 [3NF Schema] ──► S2-03 [Double-Ent
 ---
 
 ### Feature Card: `S2-01` — Local PostgreSQL Infrastructure & Docker Setup
-- **Status:** `[ ] PENDING`
+- **Status:** `[x] COMPLETED`
 - **Owner:** Sameer Bhati (`S24BCAU0106`) / Apoorva Pandey (`S24BCAU0120`)
 - **Target Branch:** `feat/S2-01-postgres-docker`
 - **Prerequisites:** None
@@ -38,9 +38,9 @@ S2-01 [Postgres Docker] ──► S2-02 [3NF Schema] ──► S2-03 [Double-Ent
   - Create: `docker-compose.yml`
   - Modify: `.env.example`, `packages/server/.env`
 - **Acceptance Criteria (Definition of Done):**
-  - [ ] `docker compose up -d` boots PostgreSQL 16 cleanly with zero errors.
-  - [ ] `docker compose exec postgres pg_isready` returns `accepting connections`.
-  - [ ] Node.js client can successfully ping the database over port 5432.
+  - [x] `docker compose up -d` boots PostgreSQL 16 cleanly with zero errors.
+  - [x] `docker compose exec postgres pg_isready` returns `accepting connections`.
+  - [x] Node.js client can successfully ping the database over port 5432.
 
 ---
 

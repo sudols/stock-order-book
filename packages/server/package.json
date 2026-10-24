@@ -10,7 +10,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "timing": "tsx src/timing.ts"
+    "timing": "tsx src/timing.ts",
+    "db:ping": "tsx src/db-ping.ts"
   },
   "dependencies": {
     "@datastructures-js/linked-list": "^6.1.4",
