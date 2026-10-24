@@ -34,6 +34,7 @@ import type { Order } from '@orderbook/shared';
  * latter needs to be O(1) and it now is, without touching the full order arrays.
  */
 export class OrderBook {
+  public readonly symbol: string;
   private bidsByPrice = new Map<number, Order[]>();
   private asksByPrice = new Map<number, Order[]>();
 
@@ -44,6 +45,19 @@ export class OrderBook {
   private askPriceLevels: number[] = [];
   private ordersById = new Map<string, Order>();
   private _size = 0;
+
+  constructor(symbol: string = 'DEFAULT') {
+    this.symbol = symbol;
+  }
+
+  clear(): void {
+    this.bidsByPrice.clear();
+    this.asksByPrice.clear();
+    this.bidPriceLevels = [];
+    this.askPriceLevels = [];
+    this.ordersById.clear();
+    this._size = 0;
+  }
 
   addOrder(order: Order): void {
     this.ordersById.set(order.id, order);

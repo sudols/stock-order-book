@@ -21,31 +21,43 @@ const ORDERBOOK_EMIT_INTERVAL_MS = 500;
 export function createAppRouter(deps: {
 	matchingEngine: MatchingEngine;
 	portfolioManager: PortfolioManager;
-	orderBook: OrderBook;
+	orderBook?: OrderBook;
 	io: SocketServer;
 	ledgerService?: LedgerService;
 }) {
 	const {
 		matchingEngine,
 		portfolioManager,
-		orderBook,
 		io,
 		ledgerService = defaultLedgerService,
 	} = deps;
 
-	let orderbookDirty = false;
+	const dirtySymbols = new Set<string>();
+
 	setInterval(() => {
-		if (!orderbookDirty) return;
-		orderbookDirty = false;
-		io.emit('orderbookUpdate', {
-			bids: orderBook.getTop10Bids(),
-			asks: orderBook.getTop10Asks(),
-			timestamp: Date.now(),
-		});
+		if (dirtySymbols.size === 0) return;
+		for (const symbol of dirtySymbols) {
+			const book = matchingEngine.getOrderBook(symbol);
+			if (!book) continue;
+			const update = {
+				symbol,
+				bids: book.getTop10Bids(),
+				asks: book.getTop10Asks(),
+				timestamp: Date.now(),
+			};
+			// Symbol-specific room broadcast (FR-04)
+			io.to(`orderbook:${symbol}`).emit('orderbookUpdate', update);
+
+			// Backward compatibility: emit globally for default symbol
+			if (symbol === 'TCS' || symbol === 'DEFAULT') {
+				io.emit('orderbookUpdate', update);
+			}
+		}
+		dirtySymbols.clear();
 	}, ORDERBOOK_EMIT_INTERVAL_MS);
 
-	function markOrderbookDirty() {
-		orderbookDirty = true;
+	function markOrderbookDirty(symbol: string = 'TCS') {
+		dirtySymbols.add(symbol);
 	}
 
 	return t.router({
@@ -54,6 +66,7 @@ export function createAppRouter(deps: {
 			.input(
 				z.object({
 					token: z.string(),
+					symbol: z.string().optional().default('TCS'),
 					side: z.enum(['buy', 'sell']),
 					price: z.number(),
 					quantity: z.number(),
@@ -64,9 +77,11 @@ export function createAppRouter(deps: {
 
 				portfolioManager.initializeUser(userId);
 
+				const symbol = input.symbol || 'TCS';
 				const order: Order = {
 					id: uuidv4(),
 					userId,
+					symbol,
 					side: input.side,
 					price: input.price,
 					quantity: input.quantity,
@@ -75,7 +90,7 @@ export function createAppRouter(deps: {
 
 				const result = matchingEngine.placeOrder(order);
 
-				markOrderbookDirty();
+				markOrderbookDirty(symbol);
 
 				return result;
 			}),
@@ -86,13 +101,18 @@ export function createAppRouter(deps: {
 				z.object({
 					token: z.string(),
 					orderId: z.string(),
+					symbol: z.string().optional(),
 				}),
 			)
 			.mutation(async ({ input }) => {
 				const userId = await verifyFirebaseToken(input.token);
-				const result = matchingEngine.cancelOrder(input.orderId, userId);
+				const result = matchingEngine.cancelOrder(input.orderId, userId, input.symbol);
 
-				markOrderbookDirty();
+				if ('success' in result && result.success) {
+					markOrderbookDirty(result.success.symbol || input.symbol || 'TCS');
+				} else if (input.symbol) {
+					markOrderbookDirty(input.symbol);
+				}
 
 				return result;
 			}),
@@ -107,12 +127,26 @@ export function createAppRouter(deps: {
 			}),
 
 		// ── Get OrderBook Snapshot ────────────────────────────
-		getOrderBook: t.procedure.query(() => {
-			return {
-				bids: orderBook.getTop10Bids(),
-				asks: orderBook.getTop10Asks(),
-				timestamp: Date.now(),
-			};
+		getOrderBook: t.procedure
+			.input(
+				z.object({
+					symbol: z.string().optional(),
+				}).optional(),
+			)
+			.query(({ input }) => {
+				const symbol = input?.symbol || 'TCS';
+				const book = matchingEngine.getOrderBook(symbol) || matchingEngine.getOrderBook();
+				return {
+					symbol,
+					bids: book ? book.getTop10Bids() : [],
+					asks: book ? book.getTop10Asks() : [],
+					timestamp: Date.now(),
+				};
+			}),
+
+		// ── Get Supported Symbols & Market Parameters (FR-04) ─
+		getSymbols: t.procedure.query(() => {
+			return matchingEngine.getAllMarketParams();
 		}),
 
 		// ── Extend Market Maker ──────────────────────────────

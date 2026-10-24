@@ -26,6 +26,13 @@ export class PortfolioManager {
     return this.portfolios.get(userId) || null;
   }
 
+  deposit(userId: string, funds: { usd?: number; stocks?: number }): Portfolio {
+    const p = this.initializeUser(userId);
+    if (funds.usd !== undefined) p.usd += funds.usd;
+    if (funds.stocks !== undefined) p.stocks += funds.stocks;
+    return p;
+  }
+
   /** Pre-trade check: can the user afford this order? */
   canAfford(userId: string, side: 'buy' | 'sell', price: number, quantity: number): boolean {
     const p = this.portfolios.get(userId);

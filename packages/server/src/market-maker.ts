@@ -2,11 +2,12 @@ import 'dotenv/config';
 
 // Config
 const BOT_SECRET_KEY = process.env.BOT_SECRET_KEY || 'mock-market-maker-bot';
-const SPREAD = 2; // $2 spread
-const BASE_PRICE = 90;
+const SYMBOL = 'TCS';
+const SPREAD = 2; // ₹2 spread (multiple of 0.05)
+const BASE_PRICE = 3500;
 const ORDER_SIZE_MIN = 1;
 const ORDER_SIZE_MAX = 5;
-const INTERVAL_MS = 500; // New orders every 200ms
+const INTERVAL_MS = 500; // New orders every 500ms
 
 // Utils
 const randomInt = (min: number, max: number) =>
@@ -40,6 +41,7 @@ async function placeOrder(
 	side: 'buy' | 'sell',
 	price: number,
 	quantity: number,
+	symbol: string = SYMBOL,
 ) {
 	try {
 		const response = await fetch(`${apiUrl}/placeOrder`, {
@@ -50,6 +52,7 @@ async function placeOrder(
 			},
 			body: JSON.stringify({
 				token: BOT_SECRET_KEY,
+				symbol,
 				side,
 				price,
 				quantity,
@@ -84,8 +87,8 @@ export async function startMarketMaker(apiUrl: string) {
 				// Random walk price
 				const move = Math.random() > 0.5 ? 1 : -1;
 				currentPrice += move;
-				if (currentPrice < 50) currentPrice = 50;
-				if (currentPrice > 150) currentPrice = 150;
+				if (currentPrice < 3200) currentPrice = 3200;
+				if (currentPrice > 3800) currentPrice = 3800;
 
 				// Calculate Bid/Ask
 				const bidPrice = currentPrice - Math.floor(SPREAD / 2);

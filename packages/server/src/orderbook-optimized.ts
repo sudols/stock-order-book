@@ -19,6 +19,7 @@ import { DoublyLinkedList, DoublyLinkedListNode } from '@datastructures-js/linke
  */
 
 export class OrderBook {
+  public readonly symbol: string;
   private bidsByPrice = new Map<number, DoublyLinkedList<Order>>();
   private asksByPrice = new Map<number, DoublyLinkedList<Order>>();
   private bidPriceLevels: number[] = [];
@@ -26,6 +27,19 @@ export class OrderBook {
 
   private nodesById = new Map<string, DoublyLinkedListNode>();
   private _size = 0;
+
+  constructor(symbol: string = 'DEFAULT') {
+    this.symbol = symbol;
+  }
+
+  clear(): void {
+    this.bidsByPrice.clear();
+    this.asksByPrice.clear();
+    this.bidPriceLevels = [];
+    this.askPriceLevels = [];
+    this.nodesById.clear();
+    this._size = 0;
+  }
 
   addOrder(order: Order): void {
     const priceMap = order.side === 'buy' ? this.bidsByPrice : this.asksByPrice;

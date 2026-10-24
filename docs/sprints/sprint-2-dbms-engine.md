@@ -110,28 +110,28 @@ S2-01 [Postgres Docker] (✅) ──► S2-02 [3NF Schema] ──► S2-03 [Doub
 
 ---
 
-### Feature Card: `S2-04` — Multi-Symbol Order Book Architecture & Market Parameters (`FR-04`)
-- **Status:** `[ ] PENDING`
+### Feature Card: `[x]` `S2-04` — Multi-Symbol Order Book Architecture & Market Parameters (`FR-04`)
+- **Status:** `[x] COMPLETED`
 - **Owner:** Apoorva Pandey (`S24BCAU0120`)
 - **Target Branch:** `feat/S2-04-multi-symbol-books`
 - **Prerequisites:** `S2-02`
 - **Scope & Implementation Details:**
-  1. Refactor `packages/server/src/matching-engine.ts` and `orderbook.ts`:
-     - Replace monolithic single book with a `Map<string, OrderBook>` keyed by symbol.
-     - Support concurrent books for: `TCS`, `INFY`, `RELIANCE`, `HDFCBANK`.
-  2. Implement Market Parameters:
-     - Minimum Tick Size: ₹0.05 (reject orders whose price is not a multiple of 0.05).
-     - Standard Lot Size: 1 share.
-     - Dynamic Daily Circuit Breakers: $\pm 10\%$ band around `base_price`. Orders placed outside $[\text{base\_price} \times 0.90, \text{base\_price} \times 1.10]$ are rejected at validation.
-  3. Update WebSocket broadcast layer to use symbol-specific rooms (e.g. `orderbook:TCS`, `orderbook:INFY`, `priceHistory:TCS`).
+  - [x] 1. Refactor `packages/server/src/matching-engine.ts` and `orderbook.ts`:
+     - [x] Replace monolithic single book with a `Map<string, OrderBook>` keyed by symbol.
+     - [x] Support concurrent books for: `TCS`, `INFY`, `RELIANCE`, `HDFCBANK`.
+  - [x] 2. Implement Market Parameters:
+     - [x] Minimum Tick Size: ₹0.05 (reject orders whose price is not a multiple of 0.05).
+     - [x] Standard Lot Size: 1 share.
+     - [x] Dynamic Daily Circuit Breakers: $\pm 10\%$ band around `base_price`. Orders placed outside $[\text{base\_price} \times 0.90, \text{base\_price} \times 1.10]$ are rejected at validation.
+  - [x] 3. Update WebSocket broadcast layer to use symbol-specific rooms (e.g. `orderbook:TCS`, `orderbook:INFY`, `priceHistory:TCS`).
 - **Files Involved:**
-  - Modify: `packages/server/src/matching-engine.ts`, `packages/server/src/orderbook.ts`, `packages/server/src/index.ts`, `packages/shared/src/types.ts`
-  - Test: `packages/server/src/matching-engine.test.ts`
+  - [x] Modified: `packages/server/src/matching-engine.ts`, `packages/server/src/orderbook.ts`, `packages/server/src/orderbook-naive.ts`, `packages/server/src/orderbook-optimized.ts`, `packages/server/src/index.ts`, `packages/server/src/routers/app.ts`, `packages/server/src/portfolio-manager.ts`, `packages/shared/src/types.ts`, `packages/shared/package.json`
+  - [x] Test: `packages/server/src/matching-engine.test.ts`
 - **Acceptance Criteria (Definition of Done):**
-  - [ ] Can concurrently submit and match orders for `TCS` and `INFY` without state crosstalk.
-  - [ ] An order for ₹1,400.03 is rejected for invalid tick size (must be ₹1,400.05).
-  - [ ] An order placed outside the $\pm 10\%$ circuit band is rejected with an explanatory message.
-  - [ ] All 24 existing matching engine tests updated and passing.
+  - [x] Can concurrently submit and match orders for `TCS` and `INFY` without state crosstalk.
+  - [x] An order for ₹1,400.03 is rejected for invalid tick size (must be ₹1,400.05).
+  - [x] An order placed outside the $\pm 10\%$ circuit band is rejected with an explanatory message.
+  - [x] All 24 existing matching engine tests updated and passing.
 
 ---
 

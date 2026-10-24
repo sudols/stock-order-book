@@ -4,6 +4,7 @@ import cors from 'cors';
 import http from 'node:http';
 import { Server as SocketServer } from 'socket.io';
 import * as trpcExpress from '@trpc/server/adapters/express';
+import { SUPPORTED_SYMBOLS } from '@orderbook/shared';
 import { OrderBook } from './orderbook.js';
 import { PortfolioManager } from './portfolio-manager.js';
 import { MatchingEngine } from './matching-engine.js';
@@ -14,10 +15,14 @@ import rateLimit from 'express-rate-limit';
 
 const PORT = Number(process.env.PORT) || 3001;
 
-// ── Instantiate core objects ─────────────────────────────
-const orderBook = new OrderBook();
+// ── Instantiate multi-symbol core objects (FR-04) ────────
+const books = new Map<string, OrderBook>();
+for (const sym of SUPPORTED_SYMBOLS) {
+  books.set(sym, new OrderBook(sym));
+}
+
 const portfolioManager = new PortfolioManager();
-const matchingEngine = new MatchingEngine(orderBook, portfolioManager);
+const matchingEngine = new MatchingEngine(books, portfolioManager);
 
 // ── Express + HTTP server ────────────────────────────────
 const app = express();
@@ -50,29 +55,62 @@ app.use(generalLimiter);
 
 const server = http.createServer(app);
 
-// ── Socket.io ────────────────────────────────────────────
+// ── Socket.io with Symbol Rooms (FR-04) ───────────────────
 const io = new SocketServer(server, {
   cors: { origin: '*' },
 });
 
-// Broadcast price history updates to all clients when recorded
-matchingEngine.onPriceHistoryPush = (item) => {
-  io.emit('priceHistoryDelta', item);
+// Broadcast price history updates to symbol-specific rooms + legacy global
+matchingEngine.onPriceHistoryPush = (item, symbol) => {
+  io.to(`priceHistory:${symbol}`).emit('priceHistoryDelta', { ...item, symbol });
+  if (symbol === 'TCS' || symbol === 'DEFAULT') {
+    io.emit('priceHistoryDelta', item);
+  }
 };
 
-// Broadcast full compressed array when a compression threshold is hit
-matchingEngine.onPriceHistorySnapshot = (compressedHistory) => {
-  io.emit('priceHistorySnapshotSync', compressedHistory);
+// Broadcast compressed array when a compression threshold is hit
+matchingEngine.onPriceHistorySnapshot = (compressedHistory, symbol) => {
+  io.to(`priceHistory:${symbol}`).emit('priceHistorySnapshotSync', compressedHistory);
+  if (symbol === 'TCS' || symbol === 'DEFAULT') {
+    io.emit('priceHistorySnapshotSync', compressedHistory);
+  }
 };
 
 io.on('connection', (socket) => {
   console.log(`[ws] client connected: ${socket.id}`);
 
-  // Send current orderbook snapshot on connect
+  // Auto-subscribe to all supported symbols
+  for (const sym of SUPPORTED_SYMBOLS) {
+    socket.join(`orderbook:${sym}`);
+    socket.join(`priceHistory:${sym}`);
+  }
+
+  // Allow explicit room subscription
+  socket.on('subscribe', (symbol: string) => {
+    socket.join(`orderbook:${symbol}`);
+    socket.join(`priceHistory:${symbol}`);
+    const book = matchingEngine.getOrderBook(symbol);
+    socket.emit('orderbookSnapshot', {
+      symbol,
+      bids: book ? book.getTop10Bids() : [],
+      asks: book ? book.getTop10Asks() : [],
+      priceHistory: matchingEngine.getPriceHistory(symbol),
+      timestamp: Date.now(),
+    });
+  });
+
+  socket.on('unsubscribe', (symbol: string) => {
+    socket.leave(`orderbook:${symbol}`);
+    socket.leave(`priceHistory:${symbol}`);
+  });
+
+  // Send default (TCS) orderbook snapshot on initial connection
+  const defaultBook = matchingEngine.getOrderBook('TCS');
   socket.emit('orderbookSnapshot', {
-    bids: orderBook.getTop10Bids(),
-    asks: orderBook.getTop10Asks(),
-    priceHistory: matchingEngine.priceHistory,
+    symbol: 'TCS',
+    bids: defaultBook ? defaultBook.getTop10Bids() : [],
+    asks: defaultBook ? defaultBook.getTop10Asks() : [],
+    priceHistory: matchingEngine.getPriceHistory('TCS'),
     timestamp: Date.now(),
   });
 
@@ -111,7 +149,7 @@ app.post('/api/verify-turnstile', async (req, res) => {
 const appRouter = createAppRouter({
   matchingEngine,
   portfolioManager,
-  orderBook,
+  orderBook: matchingEngine.getOrderBook('TCS'),
   io,
 });
 
@@ -121,9 +159,16 @@ app.use(
   trpcExpress.createExpressMiddleware({ router: appRouter }),
 );
 
-// ── Health check ─────────────────────────────────────────
+// ── Health check (Multi-Symbol) ───────────────────────────
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', orders: orderBook.size });
+  const allBooks = matchingEngine.getAllOrderBooks();
+  let totalOrders = 0;
+  const bookSizes: Record<string, number> = {};
+  for (const [sym, b] of allBooks.entries()) {
+    bookSizes[sym] = b.size;
+    totalOrders += b.size;
+  }
+  res.json({ status: 'ok', orders: totalOrders, bookSizes });
 });
 
 // ── Double-Entry Ledger Audit Endpoint (NR-05) ─────────────

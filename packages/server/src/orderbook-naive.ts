@@ -1,12 +1,24 @@
 import type { Order } from '@orderbook/shared';
 
 export class OrderBook {
+  public readonly symbol: string;
   private bids: Order[] = [];
   private asks: Order[] = [];
 
   private ordersById = new Map<string, Order>();
 
   private _size = 0;
+
+  constructor(symbol: string = 'DEFAULT') {
+    this.symbol = symbol;
+  }
+
+  clear(): void {
+    this.bids = [];
+    this.asks = [];
+    this.ordersById.clear();
+    this._size = 0;
+  }
 
   addOrder(order: Order): void {
     this.ordersById.set(order.id, order);
