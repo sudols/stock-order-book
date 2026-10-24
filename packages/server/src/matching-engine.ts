@@ -9,7 +9,7 @@ import {
 	SUPPORTED_SYMBOLS,
 } from '@orderbook/shared';
 import { OrderBook } from './orderbook.js';
-import type { PortfolioManager } from './portfolio-manager.js';
+import type { PortfolioManager, SettlementResult } from './portfolio-manager.js';
 
 /**
  * MatchingEngine (Multi-Symbol Architecture — FR-04)
@@ -177,15 +177,26 @@ export class MatchingEngine {
 	 * Validate & match an incoming order against the appropriate symbol book.
 	 * Returns executed trades + any remaining (resting) order.
 	 */
+	/**
+	 * Validate & match an incoming order against the appropriate symbol book (synchronous).
+	 * Returns executed trades + any remaining (resting) order.
+	 */
 	placeOrder(
 		order: Order,
 	): Result<{ trades: Trade[]; remainingOrder: Order | null }> {
 		const symbol = order.symbol || this.defaultSymbol;
+		const isMarket = order.orderType === 'MARKET';
 
 		// ── Input validation ───────────────────────────────
-		if (order.price <= 0) return { error: 'Price must be positive' };
+		if (isMarket) {
+			if (order.price <= 0) {
+				order.price = order.side === 'buy' ? 1_000_000 : 0.05;
+			}
+		} else {
+			if (order.price <= 0) return { error: 'Price must be positive' };
+			if (order.price > 1_000_000) return { error: 'Price too high' };
+		}
 		if (order.quantity <= 0) return { error: 'Quantity must be positive' };
-		if (order.price > 1_000_000) return { error: 'Price too high' };
 		if (order.quantity > 10_000) return { error: 'Quantity too high' };
 
 		// ── Market Parameters Validation (FR-04) ───────────
@@ -203,8 +214,8 @@ export class MatchingEngine {
 				};
 			}
 
-			// 3. Minimum Tick Size check (e.g. ₹0.05)
-			if (params.tickSize > 0) {
+			// 3. Minimum Tick Size check (e.g. ₹0.05) - only for limit orders
+			if (!isMarket && params.tickSize > 0) {
 				const ticks = order.price / params.tickSize;
 				const roundedTicks = Math.round(ticks);
 				if (Math.abs(ticks - roundedTicks) > 1e-5) {
@@ -214,8 +225,8 @@ export class MatchingEngine {
 				}
 			}
 
-			// 4. Dynamic Daily Circuit Breakers (±10% band around basePrice)
-			if (params.basePrice > 0) {
+			// 4. Dynamic Daily Circuit Breakers (±10% band around basePrice) - only for limit orders
+			if (!isMarket && params.basePrice > 0) {
 				const limitPct = params.circuitLimitPct ?? 10.0;
 				const lowerBand = Number(
 					(params.basePrice * (1 - limitPct / 100)).toFixed(2),
@@ -260,8 +271,9 @@ export class MatchingEngine {
 
 			if (!opposite) break;
 
-			const canMatch =
-				order.side === 'buy'
+			const canMatch = isMarket
+				? true
+				: order.side === 'buy'
 					? order.price >= opposite.price
 					: order.price <= opposite.price;
 
@@ -298,14 +310,194 @@ export class MatchingEngine {
 			this.recordTradePrice(symbol, trade.price);
 		}
 
-		// Remaining quantity rests on the book
-		if (remainingQty > 0) {
+		// Remaining quantity rests on the book (only for limit orders)
+		if (remainingQty > 0 && !isMarket) {
 			const restingOrder: Order = { ...order, symbol, quantity: remainingQty };
 			book.addOrder(restingOrder);
 			return { success: { trades, remainingOrder: restingOrder } };
 		}
 
 		return { success: { trades, remainingOrder: null } };
+	}
+
+	/**
+	 * Asynchronously validate, match, and atomically settle an incoming order (NR-01 / S2-05).
+	 * If matching generates trades, executes multi-counterparty atomic settlement under
+	 * REPEATABLE READ isolation. If settlement fails, book modifications are cleanly rolled back.
+	 */
+	async placeOrderAsync(
+		order: Order,
+	): Promise<Result<{ trades: Trade[]; remainingOrder: Order | null; settlement?: SettlementResult }>> {
+		const symbol = order.symbol || this.defaultSymbol;
+		const isMarket = order.orderType === 'MARKET';
+
+		// ── Input validation ───────────────────────────────
+		if (isMarket) {
+			if (order.price <= 0) {
+				order.price = order.side === 'buy' ? 1_000_000 : 0.05;
+			}
+		} else {
+			if (order.price <= 0) return { error: 'Price must be positive' };
+			if (order.price > 1_000_000) return { error: 'Price too high' };
+		}
+		if (order.quantity <= 0) return { error: 'Quantity must be positive' };
+		if (order.quantity > 10_000) return { error: 'Quantity too high' };
+
+		// ── Market Parameters Validation (FR-04) ───────────
+		const params = this.marketParams.get(symbol);
+		if (params) {
+			// 1. Trading Halt check
+			if (params.isHalted) {
+				return { error: `Trading is halted for symbol ${symbol}` };
+			}
+
+			// 2. Standard Lot Size check
+			if (params.lotSize > 0 && order.quantity % params.lotSize !== 0) {
+				return {
+					error: `Invalid lot size: quantity ${order.quantity} must be a multiple of lot size ${params.lotSize}`,
+				};
+			}
+
+			// 3. Minimum Tick Size check (e.g. ₹0.05) - only for limit orders
+			if (!isMarket && params.tickSize > 0) {
+				const ticks = order.price / params.tickSize;
+				const roundedTicks = Math.round(ticks);
+				if (Math.abs(ticks - roundedTicks) > 1e-5) {
+					return {
+						error: `Invalid tick size: price ₹${order.price.toFixed(2)} must be a multiple of ₹${params.tickSize.toFixed(2)}`,
+					};
+				}
+			}
+
+			// 4. Dynamic Daily Circuit Breakers (±10% band around basePrice) - only for limit orders
+			if (!isMarket && params.basePrice > 0) {
+				const limitPct = params.circuitLimitPct ?? 10.0;
+				const lowerBand = Number(
+					(params.basePrice * (1 - limitPct / 100)).toFixed(2),
+				);
+				const upperBand = Number(
+					(params.basePrice * (1 + limitPct / 100)).toFixed(2),
+				);
+
+				if (order.price < lowerBand - 1e-5 || order.price > upperBand + 1e-5) {
+					return {
+						error: `Price ₹${order.price.toFixed(2)} is outside the ±${limitPct}% circuit band [₹${lowerBand.toFixed(2)}, ₹${upperBand.toFixed(2)}] for ${symbol}`,
+					};
+				}
+			}
+		}
+
+		// ── Retrieve OrderBook for Symbol ───────────────────
+		const book = this.getOrCreateOrderBook(symbol);
+
+		// ── Matching loop with Rollback Stack ───────────────
+		interface RestingRollbackItem {
+			order: Order;
+			hadRemaining: boolean;
+			originalQty: number;
+		}
+
+		const rollbackStack: RestingRollbackItem[] = [];
+		const trades: Trade[] = [];
+		let remainingQty = order.quantity;
+
+		while (remainingQty > 0) {
+			const opposite =
+				order.side === 'buy'
+					? book.getBestAsk()
+					: book.getBestBid();
+
+			if (!opposite) break;
+
+			const canMatch = isMarket
+				? true
+				: order.side === 'buy'
+					? order.price >= opposite.price
+					: order.price <= opposite.price;
+
+			if (!canMatch) break;
+
+			const tradeQty = Math.min(remainingQty, opposite.quantity);
+
+			rollbackStack.push({
+				order: { ...opposite },
+				hadRemaining: opposite.quantity > tradeQty,
+				originalQty: opposite.quantity,
+			});
+
+			const trade: Trade = {
+				id: uuidv4(),
+				symbol,
+				buyOrderId: order.side === 'buy' ? order.id : opposite.id,
+				sellOrderId: order.side === 'sell' ? order.id : opposite.id,
+				buyerId: order.side === 'buy' ? order.userId : opposite.userId,
+				sellerId: order.side === 'sell' ? order.userId : opposite.userId,
+				price: opposite.price,
+				quantity: tradeQty,
+				timestamp: Date.now(),
+			};
+
+			trades.push(trade);
+			remainingQty -= tradeQty;
+
+			if (opposite.quantity === tradeQty) {
+				book.removeOrder(opposite.id);
+			} else {
+				opposite.quantity -= tradeQty;
+			}
+		}
+
+		// ── Multi-Counterparty Atomic Settlement (S2-05) ────
+		let settlement: SettlementResult | undefined;
+
+		if (trades.length > 0 && this.portfolioManager) {
+			try {
+				settlement = await this.portfolioManager.settleTradesAtomic({
+					trades,
+					takerOrder: order,
+					symbolId: symbol,
+				});
+			} catch (err: any) {
+				// Cleanly rollback in-memory book modifications
+				for (let i = rollbackStack.length - 1; i >= 0; i--) {
+					const item = rollbackStack[i];
+					if (!item.hadRemaining) {
+						book.addOrder({ ...item.order, quantity: item.originalQty });
+					} else {
+						const existing = book.getOrderById(item.order.id);
+						if (existing) {
+							existing.quantity = item.originalQty;
+						} else {
+							book.addOrder({ ...item.order, quantity: item.originalQty });
+						}
+					}
+				}
+				return { error: err.message || 'Atomic settlement failed' };
+			}
+
+			for (const t of trades) {
+				this.recordTradePrice(symbol, t.price);
+			}
+		}
+
+		// Remaining quantity rests on the book (limit orders only)
+		if (remainingQty > 0 && !isMarket) {
+			const restingOrder: Order = { ...order, symbol, quantity: remainingQty };
+			book.addOrder(restingOrder);
+
+			if (this.portfolioManager) {
+				try {
+					await this.portfolioManager.lockFundsForOrder(restingOrder);
+				} catch (err: any) {
+					book.removeOrder(restingOrder.id);
+					return { error: err.message || 'Failed to lock funds for resting order' };
+				}
+			}
+
+			return { success: { trades, remainingOrder: restingOrder, settlement } };
+		}
+
+		return { success: { trades, remainingOrder: null, settlement } };
 	}
 
 	/** Cancel an existing order by ID and optional symbol. */
@@ -332,6 +524,19 @@ export class MatchingEngine {
 		}
 
 		return { error: 'Order not found' };
+	}
+
+	/** Asynchronously cancel order and release locked funds */
+	async cancelOrderAsync(orderId: string, userId: string, symbol?: string): Promise<Result<Order>> {
+		const result = this.cancelOrder(orderId, userId, symbol);
+		if ('success' in result && result.success && this.portfolioManager) {
+			try {
+				await this.portfolioManager.unlockFundsForOrder(result.success);
+			} catch (err: any) {
+				console.warn('Failed to unlock funds on order cancellation:', err);
+			}
+		}
+		return result;
 	}
 
 	/** Clear all books and price histories (useful for testing). */

@@ -9,7 +9,7 @@
 
 ```
 Sprint 1 (Weeks 1-3)  ──► In-Memory Matching Engine & Dual Engine Benchmarks    [✅ COMPLETED]
-Sprint 2 (Weeks 4-6)  ──► 3NF PostgreSQL Schema, Settlement & Multi-Symbol Engine [🔄 ACTIVE]
+Sprint 2 (Weeks 4-6)  ──► 3NF PostgreSQL Schema, Settlement & Multi-Symbol Engine [✅ COMPLETED]
 Sprint 3 (Weeks 7-9)  ──► Tool-Calling Agentic AI Tutor & Execution Trace Modal  [🔄 ACTIVE]
 Sprint 4 (Weeks 10-12) ──► WAL Crash Recovery, Time-Travel Replay & Telemetry     [⏳ UPCOMING]
 ```
@@ -40,7 +40,7 @@ Sprint 4 (Weeks 10-12) ──► WAL Crash Recovery, Time-Travel Replay & Teleme
 
 ---
 
-### Sprint 2: 3NF PostgreSQL Schema & Multi-Symbol Engine (Weeks 4–6) — 🔄 ACTIVE
+### Sprint 2: 3NF PostgreSQL Schema & Multi-Symbol Engine (Weeks 4–6) — ✅ COMPLETED
 *Detailed specs:* [docs/sprints/sprint-2-dbms-engine.md](sprints/sprint-2-dbms-engine.md)
 
 | Feature ID | Feature Name | Assignee | Target Branch | Status |
@@ -49,7 +49,7 @@ Sprint 4 (Weeks 10-12) ──► WAL Crash Recovery, Time-Travel Replay & Teleme
 | `S2-02` | 3NF Relational Schema & Migrations (8 Core Tables) | Sameer Bhati | `feat/S2-02-postgres-schema` | `[x]` |
 | `S2-03` | Double-Entry Financial Ledger & Trigger Invariants (`NR-05`) | Sameer Bhati | `feat/S2-03-double-entry-ledger` | `[x]` |
 | `S2-04` | Multi-Symbol Order Books & Market Parameters (`FR-04`) | Apoorva Pandey | `feat/S2-04-multi-symbol-books` | `[x]` |
-| `S2-05` | Multi-Counterparty Atomic Trade Settlement (`NR-01` Core) | Apoorva Pandey | `feat/S2-05-atomic-settlement` | `[ ]` |
+| `S2-05` | Multi-Counterparty Atomic Trade Settlement (`NR-01` Core) | Apoorva Pandey | `feat/S2-05-atomic-settlement` | `[x]` |
 
 ---
 

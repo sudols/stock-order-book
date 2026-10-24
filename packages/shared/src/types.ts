@@ -7,6 +7,7 @@ export interface Order {
   price: number;
   quantity: number;
   timestamp: number;
+  orderType?: 'LIMIT' | 'MARKET';
 }
 
 // ─── Trade ───────────────────────────────────────────────
@@ -26,6 +27,9 @@ export interface Trade {
 export interface Portfolio {
   usd: number;
   stocks: number;
+  cashBalance?: number;
+  lockedCash?: number;
+  holdings?: Record<string, { quantity: number; lockedQuantity: number }>;
 }
 
 // ─── Price History ───────────────────────────────────────

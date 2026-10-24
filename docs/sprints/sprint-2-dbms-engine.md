@@ -135,30 +135,30 @@ S2-01 [Postgres Docker] (✅) ──► S2-02 [3NF Schema] ──► S2-03 [Doub
 
 ---
 
-### Feature Card: `S2-05` — Multi-Counterparty Atomic Trade Settlement Engine (`NR-01` backend)
-- **Status:** `[ ] PENDING`
+### Feature Card: `[x]` `S2-05` — Multi-Counterparty Atomic Trade Settlement Engine (`NR-01` backend)
+- **Status:** `[x] COMPLETED`
 - **Owner:** Apoorva Pandey (`S24BCAU0120`)
 - **Target Branch:** `feat/S2-05-atomic-settlement`
 - **Prerequisites:** `S2-02`, `S2-03`, `S2-04`
 - **Scope & Implementation Details:**
-  1. Upgrade `packages/server/src/portfolio-manager.ts`:
-     - Replace RAM `Map` with transactional database queries.
-  2. Multi-Counterparty Atomic Settlement:
-     - An incoming market order sweeping resting limit orders across $k$ distinct sellers must settle atomically across $1 + k$ accounts.
-     - Execute under `REPEATABLE READ` isolation.
-  3. Pessimistic Row Locking & Deadlock Prevention:
-     - Lock buyer and all counterparty portfolios and security holdings using `SELECT ... FOR UPDATE`.
-     - **Deterministic sorted lock ordering:** Always sort accounts to be locked by `user_id` / `holding_id` before querying. This mathematically eliminates circular wait deadlock conditions.
-  4. Atomically commit:
-     - Deduct buyer cash, credit buyer shares.
-     - Deduct seller shares, credit seller cash.
-     - Decrement locked balances.
-     - Record `trades` rows.
-     - Append balanced `ledger_entries` entries.
+  - [x] 1. Upgrade `packages/server/src/portfolio-manager.ts`:
+     - [x] Replace RAM `Map` with transactional database queries.
+  - [x] 2. Multi-Counterparty Atomic Settlement:
+     - [x] An incoming market order sweeping resting limit orders across $k$ distinct sellers must settle atomically across $1 + k$ accounts.
+     - [x] Execute under `REPEATABLE READ` isolation.
+  - [x] 3. Pessimistic Row Locking & Deadlock Prevention:
+     - [x] Lock buyer and all counterparty portfolios and security holdings using `SELECT ... FOR UPDATE`.
+     - [x] **Deterministic sorted lock ordering:** Always sort accounts to be locked by `user_id` / `holding_id` before querying. This mathematically eliminates circular wait deadlock conditions.
+  - [x] 4. Atomically commit:
+     - [x] Deduct buyer cash, credit buyer shares.
+     - [x] Deduct seller shares, credit seller cash.
+     - [x] Decrement locked balances.
+     - [x] Record `trades` rows.
+     - [x] Append balanced `ledger_entries` entries.
 - **Files Involved:**
-  - Modify: `packages/server/src/portfolio-manager.ts`, `packages/server/src/matching-engine.ts`
-  - Test: `packages/server/src/atomic-settlement.test.ts`
+  - [x] Created: `packages/server/src/atomic-settlement.test.ts`, `packages/server/vitest.config.ts`
+  - [x] Modified: `packages/server/src/portfolio-manager.ts`, `packages/server/src/matching-engine.ts`, `packages/server/src/routers/app.ts`, `packages/shared/src/types.ts`
 - **Acceptance Criteria (Definition of Done):**
-  - [ ] A market order sweeping 3 distinct sellers at 3 price tiers settles atomically in a single PostgreSQL transaction.
-  - [ ] If any seller has insufficient custody or a balance check fails, the entire transaction rolls back cleanly with zero partial balance changes.
-  - [ ] High-concurrency test simulating simultaneous crossed orders completes with zero circular-wait deadlocks.
+  - [x] A market order sweeping 3 distinct sellers at 3 price tiers settles atomically in a single PostgreSQL transaction.
+  - [x] If any seller has insufficient custody or a balance check fails, the entire transaction rolls back cleanly with zero partial balance changes.
+  - [x] High-concurrency test simulating simultaneous crossed orders completes with zero circular-wait deadlocks.

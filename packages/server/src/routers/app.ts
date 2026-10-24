@@ -70,6 +70,7 @@ export function createAppRouter(deps: {
 					side: z.enum(['buy', 'sell']),
 					price: z.number(),
 					quantity: z.number(),
+					orderType: z.enum(['LIMIT', 'MARKET']).optional().default('LIMIT'),
 				}),
 			)
 			.mutation(async ({ input }) => {
@@ -85,10 +86,11 @@ export function createAppRouter(deps: {
 					side: input.side,
 					price: input.price,
 					quantity: input.quantity,
+					orderType: input.orderType || 'LIMIT',
 					timestamp: Date.now(),
 				};
 
-				const result = matchingEngine.placeOrder(order);
+				const result = await matchingEngine.placeOrderAsync(order);
 
 				markOrderbookDirty(symbol);
 
@@ -106,7 +108,7 @@ export function createAppRouter(deps: {
 			)
 			.mutation(async ({ input }) => {
 				const userId = await verifyFirebaseToken(input.token);
-				const result = matchingEngine.cancelOrder(input.orderId, userId, input.symbol);
+				const result = await matchingEngine.cancelOrderAsync(input.orderId, userId, input.symbol);
 
 				if ('success' in result && result.success) {
 					markOrderbookDirty(result.success.symbol || input.symbol || 'TCS');
@@ -119,11 +121,14 @@ export function createAppRouter(deps: {
 
 		// ── Get Portfolio ────────────────────────────────────
 		getPortfolio: t.procedure
-			.input(z.object({ token: z.string() }))
+			.input(z.object({ token: z.string(), symbol: z.string().optional() }))
 			.query(async ({ input }) => {
 				const userId = await verifyFirebaseToken(input.token);
-				const portfolio = portfolioManager.initializeUser(userId);
-				return portfolio;
+				try {
+					return await portfolioManager.getPortfolioFromDb(userId, input.symbol);
+				} catch {
+					return portfolioManager.initializeUser(userId);
+				}
 			}),
 
 		// ── Get OrderBook Snapshot ────────────────────────────
