@@ -53,10 +53,29 @@ Before finishing a feature or chat turn:
 2. If frontend was modified, verify client builds: `pnpm --filter @orderbook/client build`
 3. Verify all Acceptance Criteria listed in the task card have been satisfied.
 
-### Step 5: Update the Progress Tracking
-1. Mark the feature as `[x] COMPLETED` in [`docs/ROADMAP.md`](docs/ROADMAP.md) and in the corresponding `docs/sprints/sprint-X-*.md` file.
-2. Note the branch name or commit hash.
-3. Commit your changes with a conventional commit message (e.g., `feat(db): S2-02 implement 3NF PostgreSQL schema`).
+### Step 5: Update the Progress Tracking & Mark ALL Checkboxes (CRITICAL)
+
+> **⚠️ MANDATORY CHECKBOX PROTOCOL:**
+> Every AI assistant completing a feature **MUST explicitly update every checkbox** related to that feature before ending the session. Do not just update the status row—every completed item within the task card must be checked off. Never leave unchecked `[ ]` boxes on a completed feature!
+
+Follow this exact completion checklist across both documents:
+
+1. **In the corresponding sprint file (`docs/sprints/sprint-X-*.md`):**
+   - **Feature Card Header:** Update to `### Feature Card: [x] <ID> — <Title>`
+   - **Status Line:** Change `- Status: [ ] PENDING` to `- Status: [x] COMPLETED`
+   - **Scope Details:** Mark every item in `Scope & Implementation Details` with `[x]` (e.g., `- [x] 1. ...`, `- [x] 2. ...`).
+   - **Files Involved:** Mark all file lists with `[x]` (e.g., `- [x] Created: ...`, `- [x] Modified: ...`).
+   - **Acceptance Criteria (Definition of Done):** Change every single criterion checkbox from `- [ ]` to `- [x]` once verified.
+
+2. **In the master roadmap (`docs/ROADMAP.md`):**
+   - Locate the feature row in the progress table and change `[ ]` to `[x]` (e.g., `| S2-03 | ... | [x] |`).
+
+3. **Self-Verification Check:**
+   - Run `git diff docs/` to verify that **NO unchecked `[ ]` boxes** remain for that completed feature card.
+
+4. **Git Commit:**
+   - Stage the updated docs alongside your code changes.
+   - Commit with a conventional commit message (e.g., `feat(db): S2-03 double-entry financial ledger and trigger invariants (NR-05)`).
 
 ---
 

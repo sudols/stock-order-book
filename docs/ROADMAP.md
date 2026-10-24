@@ -83,4 +83,4 @@ When starting a new chat session to build any feature:
 1. **Reference the Feature ID:** Tell the assistant: *"Please work on Feature S2-01"* or *"Please implement S3-02 Collision Tree modal"*.
 2. **Branch Check:** The assistant creates or checks out `feat/<FEATURE-ID>-<slug>`.
 3. **Execution & Acceptance:** Follow the exact Acceptance Criteria in the sprint file.
-4. **Update Status:** Change `[ ]` to `[x]` in this table and the sprint file when completed and tests pass.
+4. **Update Status & Checkboxes:** Change `[ ]` to `[x]` in this table AND mark all checkboxes (`[x]`) in the sprint task card (header, status, scope items, files, acceptance criteria) as mandated by `AGENTS.md`.
