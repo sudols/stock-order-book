@@ -13,3 +13,11 @@ stockbook-*-firebase-adminsdk.json
 # Profiler & Editor
 *.heapsnapshot
 .vscode/
+
+# Build artifacts & binaries
+packages/matching-engine-go/matching-engine
+*.exe
+
+# Local database volumes
+postgres_data/
+
