@@ -9,6 +9,7 @@ import { PortfolioManager } from './portfolio-manager.js';
 import { MatchingEngine } from './matching-engine.js';
 import { createAppRouter } from './routers/app.js';
 import { startMarketMaker } from './market-maker.js';
+import { ledgerService } from './services/ledger.js';
 import rateLimit from 'express-rate-limit';
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -123,6 +124,16 @@ app.use(
 // ── Health check ─────────────────────────────────────────
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', orders: orderBook.size });
+});
+
+// ── Double-Entry Ledger Audit Endpoint (NR-05) ─────────────
+app.get('/api/audit/verify-ledger', async (_req, res) => {
+  try {
+    const report = await ledgerService.verifyLedgerIntegrity();
+    res.status(200).json(report);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to verify ledger integrity', details: err?.message || String(err) });
+  }
 });
 
 // ── Start ────────────────────────────────────────────────

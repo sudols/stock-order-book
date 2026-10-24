@@ -8,6 +8,13 @@
       "when": 1792855518721,
       "tag": "0000_thick_mandarin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792856000000,
+      "tag": "0001_ledger_balance_trigger",
+      "breakpoints": true
     }
   ]
 }

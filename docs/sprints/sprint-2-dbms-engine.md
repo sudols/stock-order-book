@@ -80,30 +80,31 @@ S2-01 [Postgres Docker] (✅) ──► S2-02 [3NF Schema] ──► S2-03 [Doub
 
 ---
 
-### Feature Card: `S2-03` — Double-Entry Financial Ledger & Trigger Invariants (`NR-05`)
-- **Status:** `[ ] PENDING`
+### Feature Card: `[x]` `S2-03` — Double-Entry Financial Ledger & Trigger Invariants (`NR-05`)
+- **Status:** `[x] COMPLETED`
 - **Owner:** Sameer Bhati (`S24BCAU0106`)
 - **Target Branch:** `feat/S2-03-double-entry-ledger`
 - **Prerequisites:** `S2-02`
 - **Scope & Implementation Details:**
-  1. Implement the institutional double-entry journal service in `packages/server/src/services/ledger.ts`:
+  - [x] 1. Implement the institutional double-entry journal service in `packages/server/src/services/ledger.ts`:
      - Every trade between Buyer A and Seller B creates balanced ledger rows:
        - Buyer Cash Account: Credit (cash outflow = price × quantity)
        - Buyer Securities Account: Debit (shares inflow = quantity)
        - Seller Cash Account: Debit (cash inflow = price × quantity)
        - Seller Securities Account: Credit (shares outflow = quantity)
-  2. Enforce the mathematical invariant:
+  - [x] 2. Enforce the mathematical invariant:
      $$\sum \text{Debits} \equiv \sum \text{Credits} \quad \text{for every transaction\_id}$$
-  3. Add a PostgreSQL deferred constraint trigger or service validation hook verifying that any unbalanced transaction is automatically rejected and rolled back.
-  4. Implement an audit integrity endpoint:
+  - [x] 3. Add a PostgreSQL deferred constraint trigger or service validation hook verifying that any unbalanced transaction is automatically rejected and rolled back.
+  - [x] 4. Implement an audit integrity endpoint:
      - `GET /api/audit/verify-ledger`: Runs aggregate sum checks across the entire system to verify 0 discrepancy.
+     - `trpc.verifyLedger`: tRPC procedure querying system-wide ledger verification.
 - **Files Involved:**
-  - Create: `packages/server/src/services/ledger.ts`, `packages/server/src/services/ledger.test.ts`
-  - Modify: `packages/server/src/routers/app.ts`
+  - [x] Created: `packages/server/src/services/ledger.ts`, `packages/server/src/services/ledger.test.ts`, `packages/server/drizzle/0001_ledger_balance_trigger.sql`
+  - [x] Modified: `packages/server/src/routers/app.ts`, `packages/server/src/index.ts`, `packages/server/drizzle/meta/_journal.json`
 - **Acceptance Criteria (Definition of Done):**
-  - [ ] Unit tests verify that unbalanced journal entries trigger an immediate rollback.
-  - [ ] Executing 100 mock trades results in `Σ Debits == Σ Credits` across all entries in `ledger_entries`.
-  - [ ] Audit query endpoint returns `200 OK` with `{ verified: true, discrepancy: 0.00 }`.
+  - [x] Unit tests verify that unbalanced journal entries trigger an immediate rollback.
+  - [x] Executing 100 mock trades results in `Σ Debits == Σ Credits` across all entries in `ledger_entries`.
+  - [x] Audit query endpoint returns `200 OK` with `{ verified: true, discrepancy: 0.00 }`.
 
 ---
 

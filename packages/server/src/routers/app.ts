@@ -8,6 +8,7 @@ import type { PortfolioManager } from '../portfolio-manager.js';
 import type { OrderBook } from '../orderbook.js';
 import type { Server as SocketServer } from 'socket.io';
 import { marketMakerController } from '../market-maker.js';
+import { ledgerService as defaultLedgerService, type LedgerService } from '../services/ledger.js';
 
 const t = initTRPC.create();
 
@@ -22,8 +23,15 @@ export function createAppRouter(deps: {
 	portfolioManager: PortfolioManager;
 	orderBook: OrderBook;
 	io: SocketServer;
+	ledgerService?: LedgerService;
 }) {
-	const { matchingEngine, portfolioManager, orderBook, io } = deps;
+	const {
+		matchingEngine,
+		portfolioManager,
+		orderBook,
+		io,
+		ledgerService = defaultLedgerService,
+	} = deps;
 
 	let orderbookDirty = false;
 	setInterval(() => {
@@ -120,6 +128,11 @@ export function createAppRouter(deps: {
 				marketMakerController.extend(input.durationMs);
 				return { success: true };
 			}),
+
+		// ── Audit Ledger Integrity (NR-05) ───────────────────
+		verifyLedger: t.procedure.query(async () => {
+			return await ledgerService.verifyLedgerIntegrity();
+		}),
 	});
 }
 
