@@ -1,6 +1,6 @@
 # ⚡ Sprint 2: 3NF PostgreSQL Schema, Atomic Settlement & Multi-Symbol Engine
 
-> **Sprint Status:** 🔄 **ACTIVE (Weeks 4–6)**  
+> **Sprint Status:** ✅ **COMPLETED (Weeks 4–6)**  
 > **Primary Goal:** Transition from in-memory prototype to ACID-compliant PostgreSQL relational engine with bank-grade double-entry ledger and multi-symbol support.  
 > **Master Spec Reference:** [GLASS_BOX_PROJECT_SPECIFICATION.md#4-postgresql-3nf-relational-database-schema](../GLASS_BOX_PROJECT_SPECIFICATION.md)
 
@@ -9,11 +9,11 @@
 ## 📋 Sprint Feature Cards
 
 ```
-S2-01 [Postgres Docker] (✅) ──► S2-02 [3NF Schema] ──► S2-03 [Double-Entry Ledger]
+S2-01 [Postgres Docker] (✅) ──► S2-02 [3NF Schema] (✅) ──► S2-03 [Double-Entry Ledger] (✅)
                                   │
-                                  ├─► S2-04 [Multi-Symbol Books]
+                                  ├─► S2-04 [Multi-Symbol Books] (✅)
                                   │
-                                  └─► S2-05 [Multi-Party Atomic Settlement]
+                                  └─► S2-05 [Multi-Party Atomic Settlement] (✅)
 ```
 
 ---
