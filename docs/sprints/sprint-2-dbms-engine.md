@@ -9,7 +9,7 @@
 ## 📋 Sprint Feature Cards
 
 ```
-S2-01 [Postgres Docker] ──► S2-02 [3NF Schema] ──► S2-03 [Double-Entry Ledger]
+S2-01 [Postgres Docker] (✅) ──► S2-02 [3NF Schema] ──► S2-03 [Double-Entry Ledger]
                                   │
                                   ├─► S2-04 [Multi-Symbol Books]
                                   │
@@ -18,25 +18,30 @@ S2-01 [Postgres Docker] ──► S2-02 [3NF Schema] ──► S2-03 [Double-Ent
 
 ---
 
-### Feature Card: `S2-01` — Local PostgreSQL Infrastructure & Docker Setup
+### Feature Card: `[x]` `S2-01` — Local PostgreSQL Infrastructure & Docker Setup
 - **Status:** `[x] COMPLETED`
 - **Owner:** Sameer Bhati (`S24BCAU0106`) / Apoorva Pandey (`S24BCAU0120`)
 - **Target Branch:** `feat/S2-01-postgres-docker`
 - **Prerequisites:** None
 - **Scope & Implementation Details:**
-  1. Add `docker-compose.yml` to the project root:
-     - PostgreSQL 16 image (`postgres:16-alpine`).
-     - Port mapping: `5432:5432`.
-     - Environment variables: `POSTGRES_USER=postgres`, `POSTGRES_PASSWORD=postgres`, `POSTGRES_DB=glassbox`.
-     - Persistent volume: `postgres_data:/var/lib/postgresql/data`.
-     - Health check using `pg_isready -U postgres`.
-  2. Configure `.env.example` and update `.env` in root and `packages/server/`:
-     - `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/glassbox`
-     - `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/glassbox_test`
-  3. Ensure `.gitignore` ignores `postgres_data/`.
+  - [x] 1. Add `docker-compose.yml` to the project root:
+     - [x] PostgreSQL 16 image (`postgres:16-alpine`).
+     - [x] Port mapping: `5432:5432`.
+     - [x] Environment variables: `POSTGRES_USER=postgres`, `POSTGRES_PASSWORD=postgres`, `POSTGRES_DB=glassbox`.
+     - [x] Persistent volume: `postgres_data:/var/lib/postgresql/data`.
+     - [x] Health check using `pg_isready -U postgres`.
+     - [x] Automated test database initialization script (`docker/init-db.sh` creates `glassbox_test`).
+  - [x] 2. Configure `.env.example` and update `.env` in root and `packages/server/`:
+     - [x] `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/glassbox`
+     - [x] `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/glassbox_test`
+     - [x] `POSTGRES_USER=postgres`, `POSTGRES_PASSWORD=postgres`, `POSTGRES_DB=glassbox`
+  - [x] 3. Ensure `.gitignore` ignores `postgres_data/`.
+  - [x] 4. Node.js database ping verification utility and integration test:
+     - [x] `packages/server/src/db-ping.ts` (CLI command `pnpm --filter @orderbook/server db:ping`)
+     - [x] `packages/server/src/db-ping.test.ts` (included and passing in vitest suite)
 - **Files Involved:**
-  - Create: `docker-compose.yml`
-  - Modify: `.env.example`, `packages/server/.env`
+  - [x] Created: `docker-compose.yml`, `docker/init-db.sh`, `packages/server/src/db-ping.ts`, `packages/server/src/db-ping.test.ts`
+  - [x] Modified: `.env.example`, `.env`, `packages/server/.env`, `packages/server/package.json`
 - **Acceptance Criteria (Definition of Done):**
   - [x] `docker compose up -d` boots PostgreSQL 16 cleanly with zero errors.
   - [x] `docker compose exec postgres pg_isready` returns `accepting connections`.
