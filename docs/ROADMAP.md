@@ -58,7 +58,7 @@ Sprint 4 (Weeks 10-12) ──► WAL Crash Recovery, Time-Travel Replay & Teleme
 
 | Feature ID | Feature Name | Assignee | Target Branch | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| `S3-01` | Tool-Calling Agentic AI Tutor with 5 Tools (`NR-02`) | Apoorva Pandey | `feat/S3-01-gemini-ai-tutor` | `[ ]` |
+| `S3-01` | Tool-Calling Agentic AI Tutor with 5 Tools (`NR-02`) | Apoorva Pandey | `feat/S3-01-gemini-ai-tutor` | `[x]` |
 | `S3-02` | "Glass-Box" Collision Tree Execution Trace Modal (`NR-01` UI) | Sameer Bhati | `feat/S3-02-execution-trace-modal` | `[ ]` |
 | `S3-03` | Order Book Imbalance (OBI) Gauge (`NR-07`) | Sameer Bhati | `feat/S3-03-obi-gauge` | `[ ]` |
 | `S3-04` | Multi-Symbol Dashboard UI & Instrument Selector | Sameer Bhati | `feat/S3-04-symbol-selector-ui` | `[ ]` |

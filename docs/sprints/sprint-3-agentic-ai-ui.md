@@ -20,34 +20,34 @@ S3-04 [Multi-Symbol Selector] ─┘
 
 ---
 
-### Feature Card: `S3-01` — Tool-Calling Agentic AI Market Microstructure Tutor (`NR-02`)
-- **Status:** `[ ] PENDING`
+### Feature Card: [x] `S3-01` — Tool-Calling Agentic AI Market Microstructure Tutor (`NR-02`)
+- **Status:** `[x] COMPLETED`
 - **Owner:** Apoorva Pandey (`S24BCAU0120`)
 - **Target Branch:** `feat/S3-01-gemini-ai-tutor`
 - **Prerequisites:** `S2-02`, `S2-04`
 - **Scope & Implementation Details:**
-  1. Set up Google Gemini API integration in `packages/server/src/services/ai-tutor.ts` using `@google/genai` or `@google/generative-ai`.
-  2. Implement structured **tool calling / function calling** with 5 database inspection tools:
+  - [x] 1. Set up Google Gemini API integration in `packages/server/src/services/ai-tutor.ts` using `@google/genai` or `@google/generative-ai`.
+  - [x] 2. Implement structured **tool calling / function calling** with 5 database inspection tools:
      - `get_orderbook_depth(symbol: string)`: Queries top 10 price levels and cumulative volume.
      - `calculate_slippage(symbol: string, order_size: number, side: 'BUY'|'SELL')`: Computes expected execution price vs. top-of-book.
      - `get_orderbook_imbalance(symbol: string)`: Computes real-time OBI ratio across top 5 tiers.
      - `inspect_recent_trades(symbol: string, limit: number)`: Returns latest executed trade contracts from PostgreSQL.
      - `explain_price_movement(symbol: string, timeframe: string)`: Queries taker order flow and book depth sweeps over the timeframe.
-  3. System Prompt Engineering:
+  - [x] 3. System Prompt Engineering:
      - Strict pedagogical personality: explain market causality mathematically (e.g. why slippage occurred, why spread widened).
      - **Zero hallucination guarantee:** The AI must only cite numbers fetched from its tool calls.
-  4. Expose tRPC / WebSocket conversation endpoint:
+  - [x] 4. Expose tRPC / WebSocket conversation endpoint:
      - `tRPC query / mutation: aiTutor.askQuestion({ message: string, symbol: string })`.
-  5. Frontend Floating Drawer:
+  - [x] 5. Frontend Floating Drawer:
      - Expandable AI Tutor drawer in bottom-right corner of client.
      - Streaming response rendering with Markdown and tool-call audit tags.
 - **Files Involved:**
-  - Create: `packages/server/src/services/ai-tutor.ts`, `packages/client/src/components/AITutorDrawer.tsx`
-  - Modify: `packages/server/src/routers/app.ts`, `packages/client/src/App.tsx`
+  - [x] Created: `packages/server/src/services/ai-tutor.ts`, `packages/client/src/components/AITutorDrawer.tsx`, `packages/server/src/services/ai-tutor.test.ts`
+  - [x] Modified: `packages/server/src/routers/app.ts`, `packages/client/src/App.tsx`, `packages/server/src/index.ts`, `packages/server/src/orderbook.ts`, `packages/shared/src/types.ts`
 - **Acceptance Criteria (Definition of Done):**
-  - [ ] Asking "Why did INFY price move?" triggers Gemini to execute `inspect_recent_trades` and `get_orderbook_depth`.
-  - [ ] Response cites actual database numbers (order volume, slippage, trade prices) without hallucination.
-  - [ ] Tool execution telemetry is displayed in an expandable "Tool Audit" accordion in the UI.
+  - [x] Asking "Why did INFY price move?" triggers Gemini to execute `inspect_recent_trades` and `get_orderbook_depth`.
+  - [x] Response cites actual database numbers (order volume, slippage, trade prices) without hallucination.
+  - [x] Tool execution telemetry is displayed in an expandable "Tool Audit" accordion in the UI.
 
 ---
 

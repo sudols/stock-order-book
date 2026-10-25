@@ -9,6 +9,7 @@ import type { OrderBook } from '../orderbook.js';
 import type { Server as SocketServer } from 'socket.io';
 import { marketMakerController } from '../market-maker.js';
 import { ledgerService as defaultLedgerService, type LedgerService } from '../services/ledger.js';
+import { AITutorService, initializeAITutorService } from '../services/ai-tutor.js';
 
 const t = initTRPC.create();
 
@@ -24,12 +25,14 @@ export function createAppRouter(deps: {
 	orderBook?: OrderBook;
 	io: SocketServer;
 	ledgerService?: LedgerService;
+	aiTutorService?: AITutorService;
 }) {
 	const {
 		matchingEngine,
 		portfolioManager,
 		io,
 		ledgerService = defaultLedgerService,
+		aiTutorService = initializeAITutorService(matchingEngine),
 	} = deps;
 
 	const dirtySymbols = new Set<string>();
@@ -171,6 +174,38 @@ export function createAppRouter(deps: {
 		// ── Audit Ledger Integrity (NR-05) ───────────────────
 		verifyLedger: t.procedure.query(async () => {
 			return await ledgerService.verifyLedgerIntegrity();
+		}),
+
+		// ── Agentic AI Market Microstructure Tutor (NR-02) ───
+		aiTutor: t.router({
+			askQuestion: t.procedure
+				.input(
+					z.object({
+						message: z.string().min(1),
+						symbol: z.string().optional().default('TCS'),
+						token: z.string().optional(),
+					}),
+				)
+				.mutation(async ({ input }) => {
+					return await aiTutorService.askQuestion({
+						message: input.message,
+						symbol: input.symbol,
+					});
+				}),
+
+			queryQuestion: t.procedure
+				.input(
+					z.object({
+						message: z.string().min(1),
+						symbol: z.string().optional().default('TCS'),
+					}),
+				)
+				.query(async ({ input }) => {
+					return await aiTutorService.askQuestion({
+						message: input.message,
+						symbol: input.symbol,
+					});
+				}),
 		}),
 	});
 }

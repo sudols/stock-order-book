@@ -1,4 +1,4 @@
-import type { Order } from '@orderbook/shared';
+import type { Order, DepthLevel } from '@orderbook/shared';
 
 /**
  * OrderBook — Data-only class (no matching logic).
@@ -128,6 +128,48 @@ export class OrderBook {
 
   getTop10Asks(): Order[] {
     return this.getTopN(this.askPriceLevels, this.asksByPrice, 10);
+  }
+
+  /**
+   * Aggregate depth levels for market microstructure inspection (NR-02, NR-07).
+   * For 'buy': walks bidPriceLevels in descending order.
+   * For 'sell': walks askPriceLevels in ascending order.
+   */
+  getDepthLevels(side: 'buy' | 'sell', maxLevels: number = 10): DepthLevel[] {
+    const levels = side === 'buy' ? this.bidPriceLevels : this.askPriceLevels;
+    const priceMap = side === 'buy' ? this.bidsByPrice : this.asksByPrice;
+    const result: DepthLevel[] = [];
+    let cumulativeVolume = 0;
+
+    const count = Math.min(levels.length, maxLevels);
+    for (let i = 0; i < count; i++) {
+      const price = levels[i];
+      const orders = priceMap.get(price) || [];
+      const quantity = orders.reduce((sum, o) => sum + o.quantity, 0);
+      cumulativeVolume += quantity;
+      result.push({
+        price,
+        quantity,
+        orderCount: orders.length,
+        cumulativeVolume,
+      });
+    }
+
+    return result;
+  }
+
+  getSpread(): number | null {
+    const bestBid = this.getBestBid();
+    const bestAsk = this.getBestAsk();
+    if (!bestBid || !bestAsk) return null;
+    return Number((bestAsk.price - bestBid.price).toFixed(2));
+  }
+
+  getMidPrice(): number | null {
+    const bestBid = this.getBestBid();
+    const bestAsk = this.getBestAsk();
+    if (!bestBid || !bestAsk) return null;
+    return Number(((bestAsk.price + bestBid.price) / 2).toFixed(2));
   }
 
   getOrderById(orderId: string): Order | null {

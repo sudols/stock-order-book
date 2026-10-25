@@ -11,6 +11,7 @@ import { MatchingEngine } from './matching-engine.js';
 import { createAppRouter } from './routers/app.js';
 import { startMarketMaker } from './market-maker.js';
 import { ledgerService } from './services/ledger.js';
+import { initializeAITutorService } from './services/ai-tutor.js';
 import rateLimit from 'express-rate-limit';
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -23,6 +24,7 @@ for (const sym of SUPPORTED_SYMBOLS) {
 
 const portfolioManager = new PortfolioManager();
 const matchingEngine = new MatchingEngine(books, portfolioManager);
+const aiTutorService = initializeAITutorService(matchingEngine);
 
 // ── Express + HTTP server ────────────────────────────────
 const app = express();
@@ -114,6 +116,21 @@ io.on('connection', (socket) => {
     timestamp: Date.now(),
   });
 
+  // Agentic AI Tutor conversation handler (NR-02)
+  socket.on('aiTutor:ask', async (data: { message: string; symbol?: string }, callback) => {
+    try {
+      const response = await aiTutorService.askQuestion(data);
+      if (typeof callback === 'function') {
+        callback({ success: true, ...response });
+      }
+      socket.emit('aiTutor:response', response);
+    } catch (err: any) {
+      if (typeof callback === 'function') {
+        callback({ success: false, error: err?.message || String(err) });
+      }
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`[ws] client disconnected: ${socket.id}`);
   });
@@ -151,6 +168,7 @@ const appRouter = createAppRouter({
   portfolioManager,
   orderBook: matchingEngine.getOrderBook('TCS'),
   io,
+  aiTutorService,
 });
 
 app.use(

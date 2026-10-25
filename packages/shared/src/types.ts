@@ -114,3 +114,30 @@ export type Result<T, E = string> =
   | { success: T; error?: never }
   | { success?: never; error: E };
 
+// ─── Order Book Depth Level (NR-02, NR-07) ─────────────────
+export interface DepthLevel {
+  price: number;
+  quantity: number;
+  orderCount: number;
+  cumulativeVolume: number;
+}
+
+// ─── AI Tutor Types (NR-02) ───────────────────────────────
+export interface ToolCallAudit {
+  id: string;
+  toolName: string;
+  args: Record<string, any>;
+  result?: any;
+  executionTimeMs: number;
+  timestamp: number;
+}
+
+export interface AITutorResponse {
+  answer: string;
+  symbol: string;
+  toolAudit: ToolCallAudit[];
+  usedTools: string[];
+  latencyMs: number;
+  model: string;
+}
+

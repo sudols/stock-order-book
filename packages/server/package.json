@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@datastructures-js/linked-list": "^6.1.4",
+    "@google/genai": "^2.31.0",
+    "@google/generative-ai": "^0.24.1",
     "@orderbook/shared": "workspace:*",
     "@trpc/server": "^10.45.2",
     "cors": "^2.8.5",

@@ -6,6 +6,7 @@ import { trpc } from './trpc';
 import { AuthGate } from './components/AuthGate';
 import { OrderBookView } from './components/OrderBook';
 import { TradeForm } from './components/TradeForm';
+import { AITutorDrawer } from './components/AITutorDrawer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -124,6 +125,8 @@ export default function App() {
 				</div>
 			</main>
 
+			{/* Agentic AI Market Microstructure Tutor (NR-02) */}
+			<AITutorDrawer />
 		</div>
 	);
 }
