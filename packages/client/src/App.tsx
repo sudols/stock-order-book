@@ -15,7 +15,6 @@ export default function App() {
 	const setUser = useStore((s) => s.setUser);
 	const setPortfolio = useStore((s) => s.setPortfolio);
 	const connectSocket = useStore((s) => s.connectSocket);
-	const disconnectSocket = useStore((s) => s.disconnectSocket);
 	const error = useStore((s) => s.error);
 	const setError = useStore((s) => s.setError);
 
@@ -29,8 +28,7 @@ export default function App() {
 
 	useEffect(() => {
 		connectSocket();
-		return () => disconnectSocket();
-	}, [connectSocket, disconnectSocket]);
+	}, [connectSocket]);
 
 	useEffect(() => {
 		if (!user) {
